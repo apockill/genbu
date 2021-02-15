@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "pycraft"
+version = "0.1.0"
+description = "Messing around with computercraft in python"
+authors = ["Alex Thiel"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+computercraft = {path = "../python-computer-craft", develop = true}
+numpy = "^1.20.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
