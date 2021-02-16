@@ -3,12 +3,15 @@ name = "pycraft"
 version = "0.1.0"
 description = "Messing around with computercraft in python"
 authors = ["Alex Thiel"]
-license = "MIT"
+license = "GPL"
 
 [tool.poetry.dependencies]
 python = "^3.8"
 computercraft = {path = "../python-computer-craft", develop = true}
 numpy = "^1.20.1"
+pytest = "^6.2.2"
+coverage = "^5.4"
+scipy = "^1.6.0"
 
 [tool.poetry.dev-dependencies]
 
