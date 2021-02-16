@@ -21,3 +21,8 @@ Write in `main.py`
 ```
 exec(open("programs/quarry.py").read())
 ```
+
+# Attributions
+## simpleAStar
+The astar implementation is a modified version of fvilmos 
+astar implementation, which can be found [here](https://github.com/fvilmos/simpleAstar).
