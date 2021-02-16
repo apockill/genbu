@@ -1,9 +1,10 @@
-import numpy as np
 import random
+
+import numpy as np
 import pytest
 
-from fleet.serializable import Map
 from fleet.astar import Astar3D
+from fleet.serializable import Map
 
 random.seed("pycraft")
 
@@ -11,7 +12,7 @@ random.seed("pycraft")
 def generate_map() -> Map:
     astar = Astar3D()
 
-    map = Map(points=np.array([[0, 0, 0]]))
+    map = Map(position=(0, 0, 0), direction=0)
     for i in range(random.randint(0, 1000)):
         point = map.points[-1].copy() + random.choice(
             astar.get_neighbors_directions())
@@ -21,7 +22,7 @@ def generate_map() -> Map:
 
 @pytest.mark.parametrize(
     argnames=("fuzzed_map",),
-    argvalues=((generate_map(),) for _ in range(100))
+    argvalues=((generate_map(),) for _ in range(25))
 )
 def test_fuzzy_astar_3d(fuzzed_map: Map):
     """Generate a map then test astar can retrace its steps"""
@@ -34,8 +35,6 @@ def test_fuzzy_astar_3d(fuzzed_map: Map):
         map=fuzzed_map,
         start_point=start_point.tolist(),
         end_point=end_point.tolist())
-    path = np.array(path)
-    path += fuzzed_map.zero_offset
 
     # Make sure a path was output, or else
     assert len(path) != 0 or (start_point == end_point).all(), \
