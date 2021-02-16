@@ -1,8 +1,9 @@
 import json
 
 import numpy as np
-
 from cc import fs
+
+from fleet.serializable import BaseSerializable
 
 STATE_FILE = "state_file.json"
 
@@ -17,12 +18,17 @@ class StateAttr:
         value = self.state_file.dict[self.key_name]
         if isinstance(self.default, np.ndarray):
             value = np.array(value)
-
+        elif isinstance(self.default, BaseSerializable):
+            value = type(self.default).from_dict(value)
         return value
 
     def write(self, value):
+        assert isinstance(value, type(self.default))
+
         if isinstance(value, np.ndarray):
             value = value.tolist()
+        elif isinstance(value, BaseSerializable):
+            value = value.to_dict()
         self.state_file.dict[self.key_name] = value
 
 
@@ -38,7 +44,11 @@ class StateFile:
     def __enter__(self):
         """Enter a context where you might edit the dictionary, but
         upon exit you will want to save all values at once"""
-        self.dict = self.read_dict()
+        if self.dict is None:
+            # Only refresh state if no one is currently 'holding' state
+            self.dict = self.read_dict()
+
+        # Keep track of state holders
         self.being_held += 1
 
     def __exit__(self, exc_type, exc_val, exc_tb):
