@@ -67,7 +67,7 @@ class Astar2D:
         '''
         self.moving_dirs = dirs
 
-    def generate_path(self, map: Map ,start_point=(0, 0), end_point=(0, 0)):
+    def generate_path(self, map: Map, end_point, start_point=None):
         '''
         A star implementation
         :param start_point: start
@@ -78,9 +78,9 @@ class Astar2D:
         '''
         self.load_map(map)
 
-        _offset = map.zero_offset
-        start_point = np.array(start_point) - _offset
-        end_point = np.array(end_point) - _offset
+        offset = map.zero_offset + [-1, -1, -1]
+        start_point = np.array(start_point or map.position) - offset
+        end_point = np.array(end_point) - offset
         self.start_point = tuple(start_point.tolist())
         self.end_point = tuple(end_point.tolist())
 
@@ -127,7 +127,11 @@ class Astar2D:
                 # check if neighbor is on the open list
                 if nn not in open_list:
                     open_list.append(nn)
-        return self.path
+
+        if len(self.path):
+            return np.array(self.path) + offset
+        else:
+            return np.array([])
 
     @staticmethod
     def __compute_cost(start_node, end_node, current_node):
@@ -169,9 +173,9 @@ class Astar2D:
         :return: None
         '''
 
-        self.gw = map.shape[0] + 1
-        self.gh = map.shape[1] + 1
-        self.map = map.offset_points
+        self.gw = map.shape[0] + 2
+        self.gh = map.shape[1] + 2
+        self.map = map.offset_points + [1, 1, 1]
 
     def get_neighbors(self, node):
         '''
@@ -229,10 +233,10 @@ class Astar3D(Astar2D):
         :return: None
         '''
 
-        self.gw = map.shape[0] + 1
-        self.gh = map.shape[1] + 1
-        self.gd = map.shape[2] + 1
-        self.map = map.offset_points
+        self.gw = map.shape[0] + 2
+        self.gh = map.shape[1] + 2
+        self.gd = map.shape[2] + 2
+        self.map = map.offset_points + [1, 1, 1]
 
     def get_neighbors(self, node):
         '''
