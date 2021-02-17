@@ -12,17 +12,19 @@ class StepFinished(Exception):
     """Called whenever a movement is performed with the robot"""
 
 
-class DigDirection(Enum):
+class Direction(Enum):
     up = auto()
     down = auto()
     front = auto()
     back = auto()
+    left = auto()
+    right = auto()
 
 
 class TurtleBlockedError(Exception):
     """Called when the turtles path is blocked"""
 
-    def __init__(self, *args, direction: DigDirection):
+    def __init__(self, *args, direction: Direction):
         super().__init__(*args)
         self.direction = direction
 
@@ -68,6 +70,8 @@ class StatefulTurtle:
         """
         if degrees == 0:
             return
+        if degrees not in (90, -90):
+            raise ValueError(f"Invalid value for degrees! {degrees}")
         map = self.state.map.read()
         map.direction = (map.direction + degrees) % 360
 
@@ -76,14 +80,13 @@ class StatefulTurtle:
                 turtle.turnRight()
             elif degrees == -90:
                 turtle.turnLeft()
-            else:
-                raise ValueError(f"Invalid value for degrees! {degrees}")
             self.state.map.write(map)
         raise StepFinished()
 
     def move_in_direction(self, move_sign: int):
         """Move forwards or backwards in the sign of direction"""
-        assert move_sign in (1, -1)
+        if move_sign not in (1, -1):
+            raise ValueError(f"Invalid value for move_sign: {move_sign}")
 
         map = self.state.map.read()
         new_position = np.array([
@@ -96,10 +99,10 @@ class StatefulTurtle:
         with self.state:
             try:
                 if move_sign == 1:
-                    direction = DigDirection.front
+                    direction = Direction.front
                     turtle.forward()
                 elif move_sign == -1:
-                    direction = DigDirection.back
+                    direction = Direction.back
                     turtle.back()
             except LuaException as e:
                 if e.message == "Movement obstructed":
@@ -111,7 +114,9 @@ class StatefulTurtle:
         raise StepFinished()
 
     def move_vertically(self, move_sign: int):
-        assert move_sign in (1, -1)
+        if move_sign not in (1, -1):
+            raise ValueError(f"Invalid value for move_sign: {move_sign}")
+
         map = self.state.map.read()
         new_position = np.array([
             map.position[0],
@@ -122,10 +127,10 @@ class StatefulTurtle:
         with self.state:
             try:
                 if move_sign == 1:
-                    direction = DigDirection.up
+                    direction = Direction.up
                     turtle.up()
                 elif move_sign == -1:
-                    direction = DigDirection.down
+                    direction = Direction.down
                     turtle.down()
             except LuaException as e:
                 if e.message == "Movement obstructed":
@@ -136,15 +141,15 @@ class StatefulTurtle:
             self.state.map.write(map)
         raise StepFinished()
 
-    def dig_towards(self, direction: DigDirection):
+    def dig_towards(self, dir: Direction):
         """Try digging towards a direction"""
-        if direction is direction.up:
+        if dir is Direction.up:
             turtle.digUp()
-        elif direction is direction.down:
+        elif dir is Direction.down:
             turtle.digDown()
-        elif direction is direction.front:
+        elif dir is Direction.front:
             turtle.dig()
-        elif direction is direction.back:
+        elif dir in [Direction.back, Direction.left, Direction.right]:
             raise NotImplementedError("Have yet to add/test this feature!")
         raise StepFinished()
 

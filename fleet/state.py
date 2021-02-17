@@ -8,6 +8,10 @@ from fleet.serializable import BaseSerializable
 STATE_FILE = "state_file.json"
 
 
+class StateNotAcquiredError(Exception):
+    """Raised when an action is performed that requires the statefile"""
+
+
 class StateAttr:
     def __init__(self, state_file: 'StateFile', key_name, default):
         self.key_name = key_name
@@ -15,6 +19,9 @@ class StateAttr:
         self.state_file = state_file
 
     def read(self):
+        if self.state_file.dict is None:
+            raise StateNotAcquiredError(
+                "You must run this action within a statefile context manager!")
         value = self.state_file.dict[self.key_name]
         if isinstance(self.default, np.ndarray):
             value = np.array(value)
@@ -23,6 +30,9 @@ class StateAttr:
         return value
 
     def write(self, value):
+        if self.state_file.dict is None:
+            raise StateNotAcquiredError(
+                "You must run this action within a statefile context manager!")
         assert isinstance(value, type(self.default))
 
         if isinstance(value, np.ndarray):
