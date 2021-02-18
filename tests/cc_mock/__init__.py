@@ -1,5 +1,6 @@
 class FS:
-    files = {}
+    def __init__(self):
+        self.files = {}
 
     class ReadHandler:
         def __init__(self, filename):
@@ -68,10 +69,18 @@ class Turtle:
     def back(self):
         pass
 
+
 class OS:
-    pass
+    def getComputerID(self):
+        return 0
+
+
+class GPS:
+    def locate(self):
+        return (0, 0, 0)
 
 
 turtle = Turtle()
 os = OS()
 fs = FS()
+gps = GPS()
