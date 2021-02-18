@@ -36,14 +36,6 @@ class Direction(Enum):
     right = auto()
 
 
-class TurtleBlockedError(LuaException):
-    """Called when the turtles path is blocked"""
-
-    def __init__(self, *args, direction: Direction):
-        super().__init__(*args)
-        self.direction = direction
-
-
 class StatefulTurtle:
     """Defines a way of working with turtles where every move is tracked,
     so that the program could crash at any moment and be brought back.
@@ -61,12 +53,38 @@ class StatefulTurtle:
     """
 
     def __init__(self):
+        # First, ensure state is retrieved via GPS initially
+        gps_loc = gps.locate()
+        if gps_loc is None:
+            raise StateRecoveryError("The turtle must have a wireless modem and be "
+                               "within range of GPS sattellites!")
+
         self.state = StateFile()
         """Representing (x, y, z) positions"""
         """Direction on the XZ plane in degrees. A value between 0-360 """
         self.state.map = StateAttr(self.state, "map",
-                                   Map(position=np.array((0, 0, 0)),
-                                       direction=0))
+                                   Map(position=gps_loc,
+                                       direction=0,
+                                       direction_verified=False))
+
+        self._maybe_recover_state(gps_loc)
+
+    def _maybe_recover_state(self, gps_loc: Tuple[int, int, int]):
+        """Validate state based on GPS data"""
+        with self.state:
+            # Check if any crash recovery needs to be done here
+            map = self.state.map.read()
+            last_known_location = map.position
+
+            if (last_known_location != gps_loc).any():
+
+                print("Warning! State file is out of sync!")
+                if not math_utils.is_adjacent(last_known_location, gps_loc):
+                    msg = ("The statefile is out of sync! GPS reports a pos "
+                           f"of {gps_loc} but state pos is {last_known_location}")
+                    raise StateRecoveryError(msg)
+                map.set_position(gps_loc)
+                self.state.map.write(map)
 
     def run(self):
         while True:
@@ -75,9 +93,9 @@ class StatefulTurtle:
                     self.step()
                     os.sleep(0.1)
                 except StepFinished:
-                    print(f"Finished step! {self.state}")
+                    pass
                 except TurtleBlockedError:
-                    print("Turtle is blocked!")
+                    pass
 
     def turn_degrees(self, degrees: int):
         """Turn `degrees` amount. The direction is determined by the sign.

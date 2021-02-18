@@ -48,7 +48,8 @@ def test_statefile_required():
         (partial(st.move_vertically, 25), ValueError),
         # Move by sign forward/backwards API
         (partial(st.move_in_direction, 1), StateNotAcquiredError, StepFinished),
-        (partial(st.move_in_direction, -1), StateNotAcquiredError, StepFinished),
+        (partial(st.move_in_direction, -1), StateNotAcquiredError,
+         StepFinished),
         (partial(st.move_in_direction, 55), ValueError),
         (partial(st.move_in_direction, 0), ValueError),
     ]
@@ -72,3 +73,44 @@ def test_statefile_required():
         # Do test with statefile
         with st.state:
             test(with_statefile_err)
+
+
+@pytest.mark.parametrize(
+    argnames=("state_pos", "gps_pos", "expected_error"),
+    argvalues=([
+        # Test state matches GPS (happy path)
+        ((0, 1, 0), (0, 1, 0), None),
+        # Test state _almost_ matches GPS, to within an adjacent block
+        ((0, 1, 0), (0, 0, 0), None),
+        ((0, 1, 0), (-1, 1, 0), None),
+        ((0, 1, 0), (1, 1, 0), None),
+        ((0, 1, 0), (0, 1, -1), None),
+        # Test no GPS available
+        ((0, 1, 0), None, StateRecoveryError),
+        # Test not next to an adjacent block
+        ((0, 2, 0), (0, 0, 0), StateRecoveryError),
+        ((0, -2, 0), (0, 0, 0), StateRecoveryError),
+        ((1, 1, 0), (0, 0, 0), StateRecoveryError),
+    ])
+)
+def test_gps_recovery(state_pos,
+                      gps_pos,
+                      expected_error):
+    """Test the turtle can recovery GPS correctly"""
+    # Initialize the state file with default attributes
+    state = StatefulTurtle().state
+
+    # Modify the statefile with a new position
+    with state:
+        map = state.map.read()
+        map.position = np.array(state_pos)
+        state.map.write(map)
+
+    # Try initializing the turtle with the new (incorrect) states
+    with mock.patch.object(cc.gps, "locate") as locate_fn:
+        locate_fn.return_value = gps_pos
+        if expected_error is None:
+            turtle = StatefulTurtle()
+        else:
+            with pytest.raises(StateRecoveryError):
+                StatefulTurtle()
