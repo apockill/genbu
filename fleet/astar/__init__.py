@@ -1,6 +1,7 @@
 import numpy as np
 
 from fleet.serializable import Map
+from fleet import math_utils
 
 
 class Astar2D:
@@ -51,13 +52,6 @@ class Astar2D:
 
         # neighbors currently 4, no diagonals
         self.moving_dirs = self.get_neighbors_directions()
-
-    def get_neighbors_directions(self):
-        '''
-        Define neighbor directions
-        :return: list of positional directions
-        '''
-        return [[1, 0], [0, 1], [-1, 0], [0, -1]]
 
     def set_neighbors_directions(self, dirs=None):
         '''
@@ -164,38 +158,6 @@ class Astar2D:
             current_node = current_node.prevNode
         return np.array(self.path[::-1])
 
-    def load_map(self, map: Map):
-        '''
-        Loads the map, abstracts different type of inputs.
-        Accepted are: np array of n x m, n x m x 1, n x m x 3
-        :param map: the map
-        :param shape: map shape
-        :return: None
-        '''
-
-        self.gw = map.shape[0] + 2
-        self.gh = map.shape[1] + 2
-        self.map = map.offset_points + [1, 1, 1]
-
-    def get_neighbors(self, node):
-        '''
-        Return a list of neighbors
-        :param node: input node
-        :return: list of neighbor coordinates
-        '''
-
-        ret = []
-
-        # get neighbor coordinates, checking also map limits (cell = 1 = wall)
-        for md in self.moving_dirs:
-            n = (node.pos[0] + md[0], node.pos[1] + md[1])
-            xmask = ((self.map[..., 0] == n[0]) & (self.map[..., 1] == n[1]))
-
-            if 0 <= n[0] < self.gw and 0 <= n[1] < self.gh and ~(
-                    self.map[xmask].any()):
-                ret.append(n)
-        return ret
-
 
 class Astar3D(Astar2D):
     def __init__(self):
@@ -222,8 +184,7 @@ class Astar3D(Astar2D):
         Define neighbor directions
         :return: list of positional directions
         '''
-        return [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0],
-                [0, 0, -1]]
+        return math_utils.NEIGHBOR_DIRECTIONS
 
     def load_map(self, map: Map):
         '''
