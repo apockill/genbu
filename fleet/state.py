@@ -48,6 +48,7 @@ class StateFile:
     def __init__(self):
         self.dict = None
         """When being held, this shows all the key/value pairs of state"""
+
         self.being_held = 0
         """When this hits 0 on __exit__, all things are saved to the file"""
 
