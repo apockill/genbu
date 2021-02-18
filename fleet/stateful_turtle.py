@@ -21,7 +21,7 @@ class Direction(Enum):
     right = auto()
 
 
-class TurtleBlockedError(Exception):
+class TurtleBlockedError(LuaException):
     """Called when the turtles path is blocked"""
 
     def __init__(self, *args, direction: Direction):
@@ -60,7 +60,7 @@ class StatefulTurtle:
                     self.step()
                     os.sleep(0.1)
                 except StepFinished:
-                    print(f"Finished step! {self.state.dict}")
+                    print(f"Finished step! {self.state}")
                 except TurtleBlockedError:
                     print("Turtle is blocked!")
 
