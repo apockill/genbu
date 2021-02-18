@@ -45,3 +45,21 @@ def test_fuzzy_astar_3d(fuzzed_map: Map):
         start_point -= direction
 
     assert (end_point == start_point).all()
+
+
+def test_no_path_found():
+    astar = Astar3D()
+    map = Map(position=(0, 0, 0),
+              direction=0,
+              points=np.array([(22, 22, 22), (22, 23, 22)]))
+
+    # Test pathfinding fails when unreachable state is requested
+    path = astar.generate_path(map, (22, 23, 22))
+    assert (path == np.array([])).all()
+    assert len(path) == 0
+
+    # Test pathfinding does work on this same map, with a different
+    # start location
+    map.set_position((22, 22, 22))
+    path = astar.generate_path(map, (22, 23, 22))
+    assert (path == [[22, 22, 22], [22, 23, 22]]).all()
