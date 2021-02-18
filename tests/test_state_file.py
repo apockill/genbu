@@ -33,3 +33,17 @@ def test_basic_usage():
 
     with state_2:
         assert state_2.my_attr.read() == 3
+
+
+def test_reading_uncommitted_attribute():
+    state = StateFile()
+
+    # Write the statefile to the system
+    with state:
+        pass
+
+    # Add an attribute
+    state.my_attr = StateAttr(state, "cool_key", default=16)
+    with state:
+        assert state.my_attr.read() == 16
+        assert state.dict == {}

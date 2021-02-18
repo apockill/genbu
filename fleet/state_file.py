@@ -25,10 +25,14 @@ class StateAttr:
         if self.state_file.dict is None:
             raise StateNotAcquiredError(
                 "You must run this action within a statefile context manager!")
-        value = self.state_file.dict[self.key_name]
-        if isinstance(self.default, np.ndarray):
-            value = np.array(value)
-        elif isinstance(self.default, BaseSerializable):
+
+        if self.key_name not in self.state_file.dict:
+            """This must be a new addition"""
+            return self.default
+        else:
+            value = self.state_file.dict[self.key_name]
+
+        if isinstance(self.default, BaseSerializable):
             value = type(self.default).from_dict(value)
         return value
 
