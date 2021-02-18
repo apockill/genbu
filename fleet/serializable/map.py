@@ -23,6 +23,7 @@ class Map(BaseSerializable):
         return f"Map(n_points={len(self.points)}, " \
                f"position={self.position}," \
                f"direction={self.direction})"
+
     @property
     def shape(self) -> np.ndarray:
         return np.amax(self.points, axis=0) - np.amin(self.points, axis=0)
