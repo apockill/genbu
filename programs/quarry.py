@@ -1,58 +1,12 @@
-import json
-
 import numpy as np
 
-from cc import fs, turtle
-
-from fleet import StateFile, StateAttr
-
-# stateful_turtle.py
-from math import cos, sin, radians
-
-
-class StatefulTurtle:
-    """Defines a way of working with turtles where every move is tracked,
-    so that the program could crash at any moment and be brought back.
-    Chunk unloading or logging off should be okay with a StatefulTurtle
-
-    Vertical: Y+
-
-    Direction when starting: (1, 0, 0)
-    X+
-    |
-    |
-    ^___________ Z+
-
-    Position when starting: (0, 0, 0)
-    """
-
-    def __init__(self):
-        self.state = StateFile()
-        self.state.position = StateAttr(self.state, "position",
-                                        np.array((0, 0, 0)))
-        """Representing (x, y, z) positions"""
-        self.state.direction = StateAttr(self.state, "direction", 0)
-        """Direction on the XZ plane in degrees. A value between 0-360 """
-
-    def run(self):
-        print("Running!")
-        with self.state:
-            print("Got state file!")
-
-    def _turn(self, degrees: int):
-        """Turn `degrees` amount. The direction is determined by the sign.
-        Only 90 or -90 is allowed
-        """
-        direction = self.state.direction.read()
-        new_direction = (direction + degrees) % 360
-        with self.state:
-            if degrees == 90:
-                turtle.turnRight()
-            elif degrees == -90:
-                turtle.turnLeft()
-            else:
-                raise ValueError(f"Invalid value for degrees! {degrees}")
-            self.state.direction.write(new_direction)
+from fleet import (
+    routines,
+    Astar3D,
+    StatefulTurtle,
+    TurtleBlockedError,
+    StateAttr)
+from fleet.math_utils import sign, angle_between
 
     def _move_in_direction(self, move_sign: int):
         """Move forwards or backwards in the sign of direction"""

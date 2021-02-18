@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, Union, Tuple
 
 import numpy as np
 from scipy.spatial import cKDTree

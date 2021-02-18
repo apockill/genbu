@@ -1,15 +1,30 @@
 from enum import Enum, auto
+from typing import Tuple
 from math import cos, sin, radians
 
 import numpy as np
 
-from cc import turtle, os
+from cc import turtle, os, gps
 from computercraft.errors import LuaException
-from fleet import StateFile, StateAttr, Map
+from fleet import StateFile, StateAttr, Map, math_utils
 
 
 class StepFinished(Exception):
     """Called whenever a movement is performed with the robot"""
+
+
+class TurtleBlockedError(LuaException):
+    """Called when the turtles path is blocked"""
+
+    def __init__(self, *args, direction: 'Direction'):
+        super().__init__(*args)
+        self.direction = direction
+
+
+class StateRecoveryError(Exception):
+    """This exception occurs on turtle startup if it's determined that the
+    state file was corrupted, or if it's unable to determine the veracity of
+    the state file."""
 
 
 class Direction(Enum):

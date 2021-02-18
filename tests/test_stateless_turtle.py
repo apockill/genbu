@@ -1,8 +1,17 @@
 from functools import partial
 
+import mock
 import pytest
+import numpy as np
 
-from fleet import StatefulTurtle, Direction, StateNotAcquiredError, StepFinished
+from tests import cc_mock as cc
+from fleet import (
+    StatefulTurtle,
+    Direction,
+    StateNotAcquiredError,
+    StepFinished,
+    StateRecoveryError
+)
 
 
 def test_statefile_required():
