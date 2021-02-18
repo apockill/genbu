@@ -1,11 +1,14 @@
 import json
+from pathlib import Path
 
+from atomicwrites import atomic_write
 import numpy as np
-from cc import fs
+from cc import fs, os
 
 from fleet.serializable import BaseSerializable
 
 STATE_FILE = "state_file.json"
+STATE_DIR = Path(".statefiles")
 
 
 class StateNotAcquiredError(Exception):
@@ -52,9 +55,19 @@ class StateFile:
         self.being_held = 0
         """When this hits 0 on __exit__, all things are saved to the file"""
 
+        self._state_path = STATE_DIR / str(os.getComputerID()) / STATE_FILE
+        """The location to cache all the turtles states. The reason the 
+        CC filesystem isn't used is because it's unreliable during program 
+        startup and shutdown, leading to inconsistent states."""
+        self._state_path.parent.mkdir(exist_ok=True, parents=True)
+
+    def __repr__(self):
+        return f"State({self.dict})"
+
     def __enter__(self):
         """Enter a context where you might edit the dictionary, but
         upon exit you will want to save all values at once"""
+
         if self.dict is None:
             # Only refresh state if no one is currently 'holding' state
             self.dict = self.read_dict()
@@ -72,17 +85,18 @@ class StateFile:
 
     def read_dict(self):
         self._create_state_if_nonexistent()
-        with fs.open(STATE_FILE, "r") as file:
-            text = file.readAll()
+
+        with self._state_path.open("r") as file:
+            text = file.read()
         return json.loads(text)
 
     def write_dict(self, state_dict):
-        as_json = json.dumps(state_dict, indent=4)
-        with fs.open(STATE_FILE, "w") as file:
+        as_json = json.dumps(state_dict)
+        with atomic_write(self._state_path, overwrite=True) as file:
             file.write(as_json)
 
     def _create_state_if_nonexistent(self):
-        if fs.exists(STATE_FILE):
+        if self._state_path.is_file():
             return
 
         # Get all the defaults by temporarily creating self.dict, writing down
