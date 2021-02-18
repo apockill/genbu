@@ -18,6 +18,8 @@ def test_statefile_required():
         (st.down, StateNotAcquiredError, StepFinished),
         (st.turn_left, StateNotAcquiredError, StepFinished),
         (st.turn_right, StateNotAcquiredError, StepFinished),
+        (st.forward, StateNotAcquiredError, StepFinished),
+        (st.backward, StateNotAcquiredError, StepFinished),
         # Digging mechanics
         (partial(st.dig_towards, Direction.up), StepFinished, StepFinished),
         (partial(st.dig_towards, Direction.down), StepFinished, StepFinished),
