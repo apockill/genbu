@@ -16,7 +16,7 @@ def refuel():
 
 def scan_for_fuel():
     """Only consume the highest-fuel slot"""
-    preferance = []
+    preference = []
     """List of item slots -> preference. Coal is preferred"""
 
     for i in range(1, 17):
@@ -33,13 +33,13 @@ def scan_for_fuel():
         is_whitelisted = name in whitelisted_fuels
 
         if is_whitelisted:
-            preferance.append((i, 1))
+            preference.append((i, 1))
             continue
 
         turtle.select(i)
         try:
             turtle.refuel(0)
-            preferance.append((i, 0))
+            preference.append((i, 0))
             continue
         except LuaException as e:
             if e.message == "Items not combustible":
@@ -47,5 +47,5 @@ def scan_for_fuel():
                 continue
             raise
 
-    preferance.sort(key=lambda i: i[1], reverse=True)
-    return [p[0] for p in preferance]
+    preference.sort(key=lambda i: i[1], reverse=True)
+    return [p[0] for p in preference]
