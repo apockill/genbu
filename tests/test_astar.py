@@ -60,6 +60,5 @@ def test_no_path_found():
 
     # Test pathfinding does work on this same map, with a different
     # start location
-    map.set_position((22, 22, 22))
-    path = astar.generate_path(map, (22, 23, 22))
+    path = astar.generate_path(map, (22, 23, 22), start_point=(22, 22, 22))
     assert (path == [[22, 22, 22], [22, 23, 22]]).all()

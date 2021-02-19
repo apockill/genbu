@@ -3,6 +3,7 @@ from typing import Dict, Any, Union, Tuple
 import numpy as np
 from scipy.spatial import cKDTree
 
+from fleet.math_utils import is_adjacent
 from fleet.serializable.base import BaseSerializable
 
 
@@ -46,7 +47,11 @@ class Map(BaseSerializable):
         """Returns whether this is a known point"""
         return any((self.points == position).all(1))
 
-    def set_position(self, position: np.ndarray):
+    def move_to(self, position: Union[np.ndarray, Tuple]):
+        """Move to an adjacent block relative to the current position"""
+        assert is_adjacent(position, self.position)
+
+        position = np.array(position)
         self.add_point(position)
         self.position = position
 
