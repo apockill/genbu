@@ -7,6 +7,25 @@ NEIGHBOR_DIRECTIONS = np.array(
      [0, 0, -1]])
 """All possible directions a turtle could go relative to a block"""
 
+ANGLES = {
+    (1, 0): 0,
+    (0, 1): 90,
+    (-1, 0): 180,
+    (0, -1): 270
+}
+"""Vectors representing the directions a turtle can face to their angle 
+representation"""
+
+
+def get_direction(from_pos: np.ndarray, to_pos: np.ndarray):
+    """Get the direction of a vector going from that position to the next
+    This function is purposely simply for perf and the nicety of having clear
+    errors if I misuse this.
+    """
+    x, _, z = to_pos - from_pos
+    diff = (x, z)
+    return ANGLES[diff]
+
 
 def sign(num):
     # TODO: add tests
