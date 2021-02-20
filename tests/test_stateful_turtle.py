@@ -4,6 +4,7 @@ from typing import Tuple
 import mock
 import pytest
 import numpy as np
+from computercraft.errors import LuaException
 
 import fleet.stateful_turtle
 from tests import cc_mock as cc
@@ -120,3 +121,91 @@ def test_gps_recovery(state_pos,
         else:
             with pytest.raises(StateRecoveryError):
                 StatefulTurtle()
+
+
+@pytest.mark.parametrize(
+    argnames=("mv_direction", "is_blocked", "from_pos", "to_gps_pos",
+              "pre_move_dir", "post_move_dir"),
+    argvalues=[
+        # Happy path
+        ("forward", False, (1, 1, 1), (2, 1, 1), 0, 0),
+        ("backward", False, (-1, -1, -1), (-2, -1, -1), 180, 180),
+        ("backward", False, (1, 2, 3), (1, 2, 4), 90, 90),
+        # Test the state direction was overwritten if it was incorrect
+        # We do a bunch of test cases here mostly just to make sure the angle
+        # calculations work, and that the forward/backwards calculation is also
+        # done correctly
+        ("forward", False, (1, 2, 3), (2, 2, 3), 90, 0),
+        ("backward", False, (0, 0, 0), (1, 0, 0), 90, 180),
+        ("forward", False, (0, 0, 0), (0, 0, 1), 180, 90),
+        ("backward", False, (0, 0, 0), (0, 0, 1), 90, 270),
+        ("forward", False, (0, 0, 0), (0, 0, -1), 90, 270),
+        ("backward", False, (0, 0, 0), (0, 0, -1), 270, 90),
+        ("forward", False, (0, 0, 0), (-1, 0, 0), 90, 180),
+        ("backward", False, (0, 0, 0), (-1, 0, 0), 90, 0),
+        ###### Test forward-position finding routine
+        # In this case the robot moves backwards instead of forward, because
+        # forward was blocked
+        ("forward", True, (0, 0, 0), (-1, 0, 0), 0, 0),
+    ]
+)
+def test_dir_uncorrupted_on_move_forward_or_backward(
+        mv_direction: str,
+        is_blocked: bool,
+        from_pos: Tuple[int, int, int],
+        to_gps_pos: Tuple[int, int, int],
+        pre_move_dir: int,
+        post_move_dir: int
+):
+    """
+    If the turtle moves forward and finds the direction it had recorded was
+    correct, everything works fine and direction is verified
+    """
+
+    with mock.patch.object(cc.gps, "locate") as gps_locate:
+        gps_locate.return_value = from_pos
+
+        # Create an initial statefile to set the pre_move_dir
+        state = StatefulTurtle().state
+        with state:
+            map = state.map.read()
+            print("MAP", map)
+            map.direction = pre_move_dir
+            state.map.write(map)
+        del state
+
+        # Create the turtle again, to verify everything loaded from the state
+        # file as expected
+        gps_locate.return_value = from_pos
+        turtle = StatefulTurtle()
+        with turtle.state:
+            map = turtle.state.map.read()
+        assert map.direction == pre_move_dir
+        assert (map.position == from_pos).all()
+
+    with turtle.state:
+        # The direction should not be initially verified
+        assert not turtle.direction_verified
+
+        expected_err = lua_errors.TurtleBlockedError if is_blocked else StepFinished
+        with mock.patch.object(cc.gps, "locate") as gps_locate, \
+                mock.patch.object(cc.turtle, "forward") as turtle_forward, \
+                mock.patch.object(cc.turtle, "back") as turtle_backward:
+            if is_blocked:
+                # If the turtle is blocked, we expect a LuaException
+                # when the turtle tries to move forward
+                msg = lua_errors.TO_LUA[expected_err]
+                turtle_forward.side_effect = LuaException(msg)
+                turtle_backward.side_effect = LuaException(msg)
+            gps_locate.return_value = to_gps_pos
+            with pytest.raises(expected_err):
+                turtle.__getattribute__(mv_direction)()
+
+        # TODO: add assert to verify direction was NOT modified
+        if not is_blocked:
+            assert turtle.direction_verified
+        else:
+            # Do some simple check here to verify the other code path was taken
+            # here. This code path will be better checked in another test
+            # dedicated to this
+            raise NotImplementedError()
