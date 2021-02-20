@@ -87,6 +87,14 @@ class StateFile:
         if self.being_held == 0:
             self.dict = None
 
+    def __setattr__(self, key, value):
+        super().__setattr__(key, value)
+        if isinstance(value, StateAttr):
+            with self:
+                # If this key wasn't in the statefile before, write it
+                if value.key_name not in self.dict:
+                    value.write(value.default)
+
     def read_dict(self):
         self._create_state_if_nonexistent()
 
@@ -107,8 +115,5 @@ class StateFile:
         # all the defaults, writing that to the state file, then setting it
         # back to None for safety.
         self.dict = {}
-        for _, attr in self.__dict__.items():
-            if isinstance(attr, StateAttr):
-                attr.write(attr.default)
         self.write_dict(self.dict)
         self.dict = None

@@ -1,4 +1,5 @@
 from functools import partial
+from typing import Tuple
 
 import mock
 import pytest
@@ -7,10 +8,11 @@ import numpy as np
 from tests import cc_mock as cc
 from fleet import (
     StatefulTurtle,
+    TurtleBlockedError,
     Direction,
     StateNotAcquiredError,
     StepFinished,
-    StateRecoveryError
+    StateRecoveryError,
 )
 
 
