@@ -127,10 +127,10 @@ def test_gps_recovery(state_pos,
     argnames=("mv_direction", "is_blocked", "from_pos", "to_gps_pos",
               "pre_move_dir", "post_move_dir"),
     argvalues=[
-        # Happy path
+        # Happy path, where expected matches what was discovered
         ("forward", False, (1, 1, 1), (2, 1, 1), 0, 0),
-        ("backward", False, (-1, -1, -1), (-2, -1, -1), 180, 180),
-        ("backward", False, (1, 2, 3), (1, 2, 4), 90, 90),
+        ("backward", False, (-1, -1, -1), (0, -1, -1), 180, 180),
+        ("backward", False, (1, 2, 3), (1, 2, 2), 90, 90),
         # Test the state direction was overwritten if it was incorrect
         # We do a bunch of test cases here mostly just to make sure the angle
         # calculations work, and that the forward/backwards calculation is also
