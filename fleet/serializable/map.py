@@ -62,9 +62,9 @@ class Map(BaseSerializable):
         self.points = np.vstack((self.points, position))
 
     def to_dict(self) -> Dict[str, Any]:
-        return {"points": self.points.tolist(),
-                "position": self.position.tolist(),
-                "direction": self.direction}
+        return {"position": self.position.tolist(),
+                "direction": self.direction,
+                "points": self.points.tolist(), }
 
     @classmethod
     def from_dict(cls, obj: Dict[str, Any]) -> 'Map':

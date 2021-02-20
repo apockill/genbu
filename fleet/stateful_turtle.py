@@ -102,7 +102,7 @@ class StatefulTurtle:
                 except StepFinished:
                     pass
                 except lua_errors.TurtleBlockedError:
-                    pass
+                    print("Turtle is Blocked!")
 
     def turn_degrees(self, degrees: int):
         """Turn `degrees` amount. The direction is determined by the sign.

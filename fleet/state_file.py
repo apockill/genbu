@@ -37,6 +37,8 @@ class StateAttr:
 
         if isinstance(self.default, BaseSerializable):
             value = type(self.default).from_dict(value)
+        elif isinstance(self.default, np.ndarray):
+            value = np.array(value)
         return value
 
     def write(self, value):
@@ -67,6 +69,8 @@ class PromptStateAttr(StateAttr):
                 user_val = input(f"Enter {key_name}:\nDefault: {default}\n")
                 user_val = parser(user_val) if user_val != "" else default
                 assert isinstance(user_val, type(default))
+                default = user_val
+
         super().__init__(state_file, key_name, default)
 
 
