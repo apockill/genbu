@@ -98,7 +98,7 @@ class StatefulTurtle:
                     os.sleep(0.1)
                 except StepFinished:
                     pass
-                except TurtleBlockedError:
+                except lua_errors.TurtleBlockedError:
                     pass
 
     def turn_degrees(self, degrees: int):
