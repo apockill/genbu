@@ -7,15 +7,26 @@ if TYPE_CHECKING:
 
 
 class TurtleBlockedError(LuaException):
-    """Called when the turtles path is blocked"""
+    """Raised when the turtles path is blocked"""
 
     def __init__(self, message, direction: 'Direction'):
         super().__init__(message)
         self.direction = direction
+        """The direction of the blocking block"""
+
+
+class UnbreakableBlockError(LuaException):
+    """Called when the turtle tries to mine a block it can't break"""
+
+    def __init__(self, message, direction: 'Direction'):
+        super().__init__(message)
+        self.direction = direction
+        """The direction of the unbreakable block"""
 
 
 FROM_LUA: Dict[str, Any] = {
-    "Movement obstructed": TurtleBlockedError
+    "Movement obstructed": TurtleBlockedError,
+    "Unbreakable block detected": UnbreakableBlockError
 }
 """Map LuaErrors to this libraries errors. These are mapped based on the 
 messages in the LuaError, hence the key to the dict is a string representing 

@@ -181,15 +181,29 @@ class StatefulTurtle:
 
     def dig_towards(self, dir: Direction):
         """Try digging towards a direction"""
-        if dir is Direction.up:
-            turtle.digUp()
-        elif dir is Direction.down:
-            turtle.digDown()
-        elif dir is Direction.front:
-            turtle.dig()
-        elif dir in [Direction.back, Direction.left, Direction.right]:
-            raise NotImplementedError("Have yet to add/test this feature!")
+        try:
+            if dir is Direction.up:
+                turtle.digUp()
+            elif dir is Direction.down:
+                turtle.digDown()
+            elif dir is Direction.front:
+                turtle.dig()
+            elif dir in [Direction.back, Direction.left, Direction.right]:
+                raise ValueError("Have yet to add/test this feature!")
+        except LuaException as e:
+            lua_errors.raise_mapped_error(
+                e, f"Tried to break unbreakable block in direction {dir}",
+                direction=dir)
         raise StepFinished()
+
+    def dig_up(self):
+        self.dig_towards(Direction.up)
+
+    def dig_down(self):
+        self.dig_towards(Direction.down)
+
+    def dig_front(self):
+        self.dig_towards(Direction.front)
 
     def up(self):
         self.move_vertically(1)

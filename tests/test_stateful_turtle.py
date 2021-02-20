@@ -124,6 +124,55 @@ def test_gps_recovery(state_pos,
 
 
 @pytest.mark.parametrize(
+    argnames=("is_bedrock_blocked", "direction", "expected_error"),
+    argvalues=[
+        # Test "happy path"
+        (False, Direction.up, StepFinished),
+        (False, Direction.down, StepFinished),
+        (False, Direction.front, StepFinished),
+        # Test invalid input
+        (False, Direction.left, ValueError),
+        (False, Direction.right, ValueError),
+        (False, Direction.back, ValueError),
+        # Test blocked by bedrock
+        (True, Direction.up, lua_errors.UnbreakableBlockError),
+        (True, Direction.down, lua_errors.UnbreakableBlockError),
+        (True, Direction.front, lua_errors.UnbreakableBlockError)
+    ],
+
+)
+def test_dig_towards(is_bedrock_blocked: bool,
+                     direction: Direction,
+                     expected_error):
+    turtle = StatefulTurtle()
+    with mock.patch.object(cc.turtle, "dig") as dig_front, \
+            mock.patch.object(cc.turtle, "digUp") as dig_up, \
+            mock.patch.object(cc.turtle, "digDown") as dig_down:
+        mapping = {
+            Direction.front: dig_front,
+            Direction.up: dig_up,
+            Direction.down: dig_down
+        }
+        if is_bedrock_blocked:
+            msg = lua_errors.TO_LUA[lua_errors.UnbreakableBlockError]
+            mapping[direction].side_effect = LuaException(msg)
+
+        assert not dig_up.called
+        assert not dig_down.called
+        assert not dig_front.called
+
+        with pytest.raises(expected_error):
+            turtle.dig_towards(direction)
+
+        # Verify the correct direction was called
+        for key, val in mapping.items():
+            if key is direction:
+                assert val.called
+            else:
+                assert not val.called
+
+
+@pytest.mark.parametrize(
     argnames=("mv_direction", "is_blocked", "from_pos", "to_gps_pos",
               "pre_move_dir", "post_move_dir"),
     argvalues=[
@@ -201,7 +250,7 @@ def test_dir_uncorrupted_on_move_forward_or_backward(
             with pytest.raises(expected_err):
                 turtle.__getattribute__(mv_direction)()
 
-        # TODO: add assert to verify direction was NOT modified
+        assert turtle.state.map.read().direction == post_move_dir
         if not is_blocked:
             assert turtle.direction_verified
         else:
