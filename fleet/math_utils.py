@@ -5,7 +5,6 @@ from math import atan2, degrees
 NEIGHBOR_DIRECTIONS = np.array(
     [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0],
      [0, 0, -1]])
-
 """All possible directions a turtle could go relative to a block"""
 
 
