@@ -42,22 +42,34 @@ class StatefulTurtle:
     Chunk unloading or logging off should be okay with a StatefulTurtle
 
     Vertical: Y+
+    Position:
+        The turtle will determine its position using GPS upon every start. If
+        GPS is not available, a StateRecoveryError will be raised.
+    Direction:
+        When starting, direction defaults to 0 degrees, but upon the first
+        movement the turtle will verify it's true direction, record that to the
+        statefile, and move appropriately to correct any bad assumptions.
 
-    Direction when starting: (1, 0, 0)
+          0 degrees: towards +X
+         90 degrees: towards +Z
+        180 degrees: towards -X
+        270 degrees: towards -Z
     X+
     |
     |
-    ^___________ Z+
+    |___________ Z+
 
-    Position when starting: (0, 0, 0)
+
+
     """
 
     def __init__(self):
         # First, ensure state is retrieved via GPS initially
         gps_loc = gps.locate()
         if gps_loc is None:
-            raise StateRecoveryError("The turtle must have a wireless modem and be "
-                               "within range of GPS sattellites!")
+            raise StateRecoveryError(
+                "The turtle must have a wireless modem and be "
+                "within range of GPS sattellites!")
 
         self.state = StateFile()
         """Representing (x, y, z) positions"""
@@ -80,8 +92,8 @@ class StatefulTurtle:
 
                 print("Warning! State file is out of sync!")
                 if not math_utils.is_adjacent(last_known_location, gps_loc):
-                    msg = ("The statefile is out of sync! GPS reports a pos "
-                           f"of {gps_loc} but state pos is {last_known_location}")
+                    msg = ("The statefile is out of sync! GPS reports a pos of "
+                           f"{gps_loc} but state pos is {last_known_location}")
                     raise StateRecoveryError(msg)
                 map.set_position(gps_loc)
                 self.state.map.write(map)
@@ -156,7 +168,7 @@ class StatefulTurtle:
             map.position[1] + move_sign,
             map.position[2]
         ])
-        map.set_position(new_position)
+        map.move_to(new_position)
         with self.state:
             try:
                 if move_sign == 1:

@@ -52,10 +52,10 @@ class Map(BaseSerializable):
         assert is_adjacent(position, self.position)
 
         position = np.array(position)
-        self.add_point(position)
+        self._add_point(position)
         self.position = position
 
-    def add_point(self, position: np.ndarray):
+    def _add_point(self, position: np.ndarray):
         if self.is_known_position(position):
             # This point is already registered. No need to register it!
             return

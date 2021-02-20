@@ -16,7 +16,7 @@ def generate_map() -> Map:
     for i in range(random.randint(0, 1000)):
         point = map.points[-1].copy() + random.choice(
             astar.get_neighbors_directions())
-        map.add_point(point)
+        map._add_point(point)
     return map
 
 
