@@ -5,14 +5,15 @@ import mock
 import pytest
 import numpy as np
 
+import fleet.stateful_turtle
 from tests import cc_mock as cc
 from fleet import (
     StatefulTurtle,
-    TurtleBlockedError,
     Direction,
     StateNotAcquiredError,
     StepFinished,
     StateRecoveryError,
+    lua_errors
 )
 
 
@@ -20,6 +21,9 @@ def test_statefile_required():
     """Test that a statefile is required for certain operations"""
 
     st = StatefulTurtle()
+
+    # Pretend this turtle is already "position verified" in every way
+    st.direction_verified = True
 
     # A list of tuples in the form of
     # (function, error expected w/o state file, error expected with state file)

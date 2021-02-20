@@ -6,19 +6,11 @@ import numpy as np
 
 from cc import turtle, os, gps
 from computercraft.errors import LuaException
-from fleet import StateFile, StateAttr, Map, math_utils
+from fleet import StateFile, StateAttr, Map, math_utils, lua_errors
 
 
 class StepFinished(Exception):
     """Called whenever a movement is performed with the robot"""
-
-
-class TurtleBlockedError(LuaException):
-    """Called when the turtles path is blocked"""
-
-    def __init__(self, *args, direction: 'Direction'):
-        super().__init__(*args)
-        self.direction = direction
 
 
 class StateRecoveryError(Exception):
@@ -178,11 +170,9 @@ class StatefulTurtle:
                     direction = Direction.down
                     turtle.down()
             except LuaException as e:
-                if e.message == "Movement obstructed":
-                    raise TurtleBlockedError(
-                        f"Blocked when moving in direction {move_sign}",
-                        direction=direction)
-                raise
+                lua_errors.raise_mapped_error(
+                    e, f"Blocked when moving in direction {move_sign}")
+
             self.state.map.write(map)
         raise StepFinished()
 

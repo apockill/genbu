@@ -2,7 +2,6 @@ from .state_file import StateAttr, StateFile, StateNotAcquiredError
 from .serializable import *
 from .stateful_turtle import (
     StatefulTurtle,
-    TurtleBlockedError,
     Direction,
     StepFinished,
     StateRecoveryError
