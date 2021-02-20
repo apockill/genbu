@@ -1,10 +1,17 @@
-from typing import Dict, Any
+from typing import Dict, Any, TYPE_CHECKING
 
 from computercraft.errors import LuaException
+
+if TYPE_CHECKING:
+    from fleet import Direction
 
 
 class TurtleBlockedError(LuaException):
     """Called when the turtles path is blocked"""
+
+    def __init__(self, message, direction: 'Direction'):
+        super().__init__(message)
+        self.direction = direction
 
 
 FROM_LUA: Dict[str, Any] = {
@@ -19,10 +26,10 @@ TO_LUA: Dict[Any, str] = {value: key for key, value in FROM_LUA.items()}
 """Useful for generating LuaExceptions in tests"""
 
 
-def raise_mapped_error(exc: LuaException, message=None):
+def raise_mapped_error(exc: LuaException, message=None, **kwargs):
     if exc.message in FROM_LUA:
         message = message if message else exc.message
-        raise FROM_LUA[exc.message](message)
+        raise FROM_LUA[exc.message](message, **kwargs)
     else:
         raise exc
 

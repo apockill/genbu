@@ -68,18 +68,21 @@ class StatefulTurtle:
         """Direction on the XZ plane in degrees. A value between 0-360 """
         self.state.map = StateAttr(self.state, "map",
                                    Map(position=gps_loc,
-                                       direction=0,
-                                       direction_verified=False))
+                                       direction=0))
+        self.direction_verified = False
+        """This is set to True if the Turtle ever moves and is able to verify 
+        that the angle it thinks is pointing is actually the angle it is 
+        pointing. It uses GPS to verify two points before and after a move to 
+        do this. """
 
-        self._maybe_recover_state(gps_loc)
+        self._maybe_recover_location(gps_loc)
 
-    def _maybe_recover_state(self, gps_loc: Tuple[int, int, int]):
+    def _maybe_recover_location(self, gps_loc: Tuple[int, int, int]):
         """Validate state based on GPS data"""
         with self.state:
             # Check if any crash recovery needs to be done here
             map = self.state.map.read()
             last_known_location = map.position
-
             if (last_known_location != gps_loc).any():
 
                 print("Warning! State file is out of sync!")
@@ -87,7 +90,7 @@ class StatefulTurtle:
                     msg = ("The statefile is out of sync! GPS reports a pos of "
                            f"{gps_loc} but state pos is {last_known_location}")
                     raise StateRecoveryError(msg)
-                map.set_position(gps_loc)
+                map.move_to(gps_loc)
                 self.state.map.write(map)
 
     def run(self):
