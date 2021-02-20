@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from typing import Any, Callable
 
 from atomicwrites import atomic_write
 import numpy as np
@@ -16,7 +17,9 @@ class StateNotAcquiredError(Exception):
 
 
 class StateAttr:
-    def __init__(self, state_file: 'StateFile', key_name, default):
+    def __init__(self, state_file: 'StateFile',
+                 key_name: str,
+                 default: Any):
         self.key_name = key_name
         self.default = default
         self.state_file = state_file
@@ -47,6 +50,24 @@ class StateAttr:
         elif isinstance(value, BaseSerializable):
             value = value.to_dict()
         self.state_file.dict[self.key_name] = value
+
+
+class PromptStateAttr(StateAttr):
+    """This is a StateAttr but the default is pulled by the user if the state
+    file doesn't exist or have that value yet"""
+
+    def __init__(
+            self, state_file: 'StateFile',
+            key_name: str,
+            parser: Callable,
+            default: Any,
+    ):
+        with state_file:
+            if key_name not in state_file.dict:
+                user_val = input(f"Enter {key_name}:\nDefault: {default}\n")
+                user_val = parser(user_val) if user_val != "" else default
+                assert isinstance(user_val, type(default))
+        super().__init__(state_file, key_name, default)
 
 
 class StateFile:
