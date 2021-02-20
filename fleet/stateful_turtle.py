@@ -129,12 +129,12 @@ class StatefulTurtle:
             raise ValueError(f"Invalid value for move_sign: {move_sign}")
 
         map = self.state.map.read()
+        old_position = map.position
         new_position = np.array([
             round(move_sign * cos(radians(map.direction))) + map.position[0],
             map.position[1],
             round(move_sign * sin(radians(map.direction))) + map.position[2]
         ])
-        map.set_position(new_position)
 
         with self.state:
             try:
@@ -145,11 +145,22 @@ class StatefulTurtle:
                     direction = Direction.back
                     turtle.back()
             except LuaException as e:
-                if e.message == "Movement obstructed":
-                    raise TurtleBlockedError(
-                        f"Blocked when moving in direction {move_sign}",
-                        direction=direction)
-                raise
+                lua_errors.raise_mapped_error(
+                    e, f"Blocked when moving in direction {direction}",
+                    direction=direction)
+            if not self.direction_verified:
+                gps_position = gps.locate()
+                # If the move_sign is negative, flip the order of to/from
+                # to represent a move backwards
+                to_from = (old_position, gps_position)[::move_sign]
+                verified_direction = math_utils.get_direction(*to_from)
+                new_position = gps_position
+                map.direction = verified_direction
+
+                # Flag the turtle as super verified and ready to roll
+                self.direction_verified = True
+
+            map.move_to(new_position)
             self.state.map.write(map)
         raise StepFinished()
 
@@ -174,7 +185,8 @@ class StatefulTurtle:
                     turtle.down()
             except LuaException as e:
                 lua_errors.raise_mapped_error(
-                    e, f"Blocked when moving in direction {move_sign}")
+                    e, f"Blocked when moving in direction {direction}",
+                    direction=direction)
 
             self.state.map.write(map)
         raise StepFinished()
