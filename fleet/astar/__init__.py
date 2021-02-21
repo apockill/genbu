@@ -61,11 +61,11 @@ class Astar2D:
         '''
         self.moving_dirs = dirs
 
-    def generate_path(self, map: Map, end_point, start_point=None):
+    def generate_path(self, map: Map, to_pos, from_pos=None):
         '''
         A star implementation
-        :param start_point: start
-        :param end_point: goal
+        :param from_pos: start
+        :param to_pos: goal
         :param grid_map: input map
         :param shape: search space shape (i.e. 2d map (10,10))
         :return: None
@@ -73,10 +73,11 @@ class Astar2D:
         self.load_map(map)
 
         offset = map.zero_offset + [-1, -1, -1]
-        start_point = np.array(start_point or map.position) - offset
-        end_point = np.array(end_point) - offset
-        self.start_point = tuple(start_point.tolist())
-        self.end_point = tuple(end_point.tolist())
+        from_pos = np.array(from_pos if from_pos is not None else map.position)
+        from_pos -= offset
+        to_pos = np.array(to_pos) - offset
+        self.start_point = tuple(from_pos.tolist())
+        self.end_point = tuple(to_pos.tolist())
 
         open_list = []
         closed_list = []
