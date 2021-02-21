@@ -15,7 +15,13 @@ from fleet.math_utils import sign, angle_between
 class NavigationMixin(StatefulTurtle):
     """Adds high-level methods helpful for moving around"""
 
-    def move_relative(self, x, y, z):
+    def move_toward_destructively(self, target_position):
+        try:
+            self.move_toward(target_position)
+        except lua_errors.TurtleBlockedError as e:
+            self.dig_towards(e.direction)
+
+    def move_toward(self, target_position):
         """Make a move in one of these directions, turning automatically"""
         raise NotImplementedError()
 
