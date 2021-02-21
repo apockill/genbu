@@ -48,17 +48,45 @@ class NavigationMixin(StatefulTurtle):
             else:
                 self.turn_toward(next_move)
                 self.forward()
-#
 
 
 
 
 
+    def explore_towards(self, target_position):
+        """Moves toward the point regardless of any known points"""
+        map = self.state.map.read()
+        if (map.position == target_position).all():
+            return
+        dist = np.array(target_position) - map.position
 
+        curr_x, curr_y, curr_z = map.position
+        if dist[0] != 0:
+            self.turn_toward([target_position[0], curr_y, curr_z])
+            self.forward()
+        elif dist[2] != 0:
+            self.turn_toward([curr_x, curr_y, target_position[2]])
+            self.forward()
+        elif dist[1] != 0:
+            assert sign(dist[1]) != 0
+            self.move_vertically(sign(dist[1]))
+        else:
+            raise RuntimeError("How was there no move??")
 
+    def turn_toward(self, target_position):
+        """Turn toward the target_position
+        """
+        map = self.state.map.read()
+        x_dist, _, z_dist = target_position.copy() - map.position
+        if x_dist == 0 and z_dist == 0:
+            return
 
-            for i in range(4):
-                self.forward()
+        unit_vector = [sign(x_dist), 0, sign(z_dist)]
+        turn_angle = angle_between(np.array([0, 0, 0]), unit_vector)
+        turn_direction = sign(turn_angle % 360 - map.direction)
+
+        if turn_direction != 0:
+            if turn_direction > 0:
                 self.turn_right()
                 self.forward()
 
