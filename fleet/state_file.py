@@ -103,6 +103,7 @@ class StateFile:
 
         # Keep track of state holders
         self.being_held += 1
+        return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.write_dict(self.dict)
@@ -129,8 +130,13 @@ class StateFile:
 
     def write_dict(self, state_dict):
         as_json = json.dumps(state_dict)
-        with atomic_write(self._state_path, overwrite=True) as file:
-            file.write(as_json)
+        while True:
+            try:
+                with atomic_write(self._state_path, overwrite=True) as file:
+                    file.write(as_json)
+                break
+            except BaseException as e:
+                print(f"Error writing state file! {type(e)} {e}")
 
     def _create_state_if_nonexistent(self):
         if self._state_path.is_file():
