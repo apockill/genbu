@@ -95,14 +95,14 @@ class StatefulTurtle:
 
     def run(self):
         while True:
-            with self.state:
-                try:
-                    self.step()
-                    os.sleep(0.1)
-                except StepFinished:
-                    pass
-                except lua_errors.TurtleBlockedError:
-                    print("Turtle is Blocked!")
+            try:
+                with self.state as state:
+                    self.step(state)
+                os.sleep(0.1)
+            except StepFinished:
+                pass
+            except lua_errors.TurtleBlockedError:
+                print("Turtle is Blocked!")
 
     def turn_degrees(self, degrees: int):
         """Turn `degrees` amount. The direction is determined by the sign.
@@ -201,7 +201,7 @@ class StatefulTurtle:
             elif dir is Direction.front:
                 turtle.dig()
             elif dir in [Direction.back, Direction.left, Direction.right]:
-                raise ValueError("Have yet to add/test this feature!")
+                raise NotImplementedError("Have yet to add/test this feature!")
         except LuaException as e:
             lua_errors.raise_mapped_error(
                 e, f"Tried to break unbreakable block in direction {dir}",
