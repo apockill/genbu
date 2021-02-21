@@ -23,19 +23,39 @@ class NavigationMixin(StatefulTurtle):
 
     def move_toward(self, target_position):
         """Make a move in one of these directions, turning automatically"""
-        raise NotImplementedError()
+        map = self.state.map.read()
 
     def turn_toward(self, x, y, z):
         """Turn toward whichever direction is non zero"""
         raise NotImplementedError()
 
+        # Move along the shortest axis first, then the longest
+        astar = Astar3D()
+        nearest_known = map.nearest_known_position(target_position)
+        path = astar.generate_path(
+            map=map,
+            end_point=nearest_known)[1:]
 
-# quarry.py
-class QuarryTurtle(NavigationMixin):
-    def run(self):
-        with self.state:
-            self.forward()
-            self.turn_right()
+        if len(path) == 0 and (map.position != target_position).any():
+            # If we've reached the nearest_known location already
+            self.explore_towards(target_position)
+        else:
+            next_move = path[0]
+            x, y, z = next_move
+            if x == map.position[0] and z == map.position[2]:
+                assert sign(y - map.position[1]) != 0
+                self.move_vertically(sign(y - map.position[1]))
+            else:
+                self.turn_toward(next_move)
+                self.forward()
+#
+
+
+
+
+
+
+
 
             for i in range(4):
                 self.forward()
