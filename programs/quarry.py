@@ -1,23 +1,23 @@
+from typing import List
+
 import numpy as np
 
 from fleet import (
     routines,
     Astar3D,
     StatefulTurtle,
-    TurtleBlockedError,
-    StateAttr)
-from fleet.math_utils import sign, angle_between
-
-
-# stateless_turtle.py
+    StateAttr,
+    PromptStateAttr,
+    lua_errors)
+from fleet.math_utils import sign, angle_between, is_adjacent
 
 
 class NavigationMixin(StatefulTurtle):
     """Adds high-level methods helpful for moving around"""
 
-    def move_toward_destructively(self, target_position):
+    def move_toward_destructively(self, to_pos):
         try:
-            self.move_toward(target_position)
+            self.move_toward(to_pos)
         except lua_errors.TurtleBlockedError as e:
             self.dig_towards(e.direction)
 
@@ -73,11 +73,13 @@ class NavigationMixin(StatefulTurtle):
         else:
             raise RuntimeError("How was there no move??")
 
-    def turn_toward(self, target_position):
+        return path
+
+    def turn_toward(self, to_pos):
         """Turn toward the target_position
         """
         map = self.state.map.read()
-        x_dist, _, z_dist = target_position.copy() - map.position
+        x_dist, _, z_dist = to_pos.copy() - map.position
         if x_dist == 0 and z_dist == 0:
             return
 
