@@ -88,10 +88,7 @@ class NavigationMixin(StatefulTurtle):
         if turn_direction != 0:
             if turn_direction > 0:
                 self.turn_right()
-                self.forward()
-
-            self.turn_left()
-            self.backward()
-
+            elif turn_direction < 0:
+                self.turn_left()
 
 QuarryTurtle().run()
