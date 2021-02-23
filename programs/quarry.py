@@ -21,13 +21,42 @@ class NavigationMixin(StatefulTurtle):
         except lua_errors.TurtleBlockedError as e:
             self.dig_towards(e.direction)
 
-    def move_toward(self, target_position):
+    def move_toward(self, to_pos):
         """Make a move in one of these directions, turning automatically"""
-        map = self.state.map.read()
+        path = self.generate_path(to_pos)
+        self.move_along_path(path)
 
-    def turn_toward(self, x, y, z):
-        """Turn toward whichever direction is non zero"""
-        raise NotImplementedError()
+    def move_along_path(self, path: List[int]):
+        if len(path) == 0:
+            return
+
+        with self.state as state:
+            map = state.map.read()
+        curr_pos = map.position.tolist()
+        if map.position.tolist() in path and len(path) > 1:
+            path = path[path.index(curr_pos) + 1:]
+
+        # Try to movZe toward that direction
+        next_pos = np.array(path[0])
+        dist = next_pos - curr_pos
+        assert abs(dist.sum()) == 1, \
+            "The move must be to an adjacent path!"
+
+        if dist[1] != 0:
+            self.move_vertically(dist[1])
+        elif dist[0] != 0 or dist[2] != 0:
+            self.turn_toward(next_pos)
+            self.forward()
+
+    def generate_path(self, to_pos, from_pos=None):
+        """
+        :param to_pos: The position to pathfind to
+        :param from_pos: The position from which to pathfind to. If None, it
+        will choose the turtles current position.
+        :return:
+        """
+        with self.state as state:
+            map = state.map.read()
 
         # Move along the shortest axis first, then the longest
         astar = Astar3D()
@@ -49,29 +78,24 @@ class NavigationMixin(StatefulTurtle):
                 self.turn_toward(next_move)
                 self.forward()
 
+        if len(path) == 0:
+            path = []
 
-
-
-
-    def explore_towards(self, target_position):
-        """Moves toward the point regardless of any known points"""
-        map = self.state.map.read()
-        if (map.position == target_position).all():
-            return
-        dist = np.array(target_position) - map.position
-
-        curr_x, curr_y, curr_z = map.position
-        if dist[0] != 0:
-            self.turn_toward([target_position[0], curr_y, curr_z])
-            self.forward()
-        elif dist[2] != 0:
-            self.turn_toward([curr_x, curr_y, target_position[2]])
-            self.forward()
-        elif dist[1] != 0:
-            assert sign(dist[1]) != 0
-            self.move_vertically(sign(dist[1]))
-        else:
-            raise RuntimeError("How was there no move??")
+        # Astar only gets you to the nearest known spot. After Astar you need
+        # do some naive "exploration" along each relevant axis.
+        while not len(path) or not path[-1] == to_pos:
+            curr_pos = path[-1] if len(path) else from_pos
+            dist = np.array(to_pos) - curr_pos
+            curr_x, curr_y, curr_z = curr_pos
+            if dist[0] != 0:
+                path.append([curr_x + sign(dist[0]), curr_y, curr_z])
+            elif dist[2] != 0:
+                path.append([curr_x, curr_y, curr_z + sign(dist[2])])
+            elif dist[1] != 0:
+                path.append([curr_x, curr_y + sign(dist[1]), curr_z])
+            else:
+                raise RuntimeError(f"How was there no move?"
+                                   f"{path} {curr_pos} {to_pos}")
 
         return path
 
