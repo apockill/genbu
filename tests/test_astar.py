@@ -33,8 +33,8 @@ def test_fuzzy_astar_3d(fuzzed_map: Map):
 
     path = astar.generate_path(
         map=fuzzed_map,
-        start_point=start_point.tolist(),
-        end_point=end_point.tolist())
+        from_pos=start_point.tolist(),
+        to_pos=end_point.tolist())
 
     # Make sure a path was output, or else
     assert len(path) != 0 or (start_point == end_point).all(), \
@@ -60,5 +60,5 @@ def test_no_path_found():
 
     # Test pathfinding does work on this same map, with a different
     # start location
-    path = astar.generate_path(map, (22, 23, 22), start_point=(22, 22, 22))
+    path = astar.generate_path(map, (22, 23, 22), from_pos=(22, 22, 22))
     assert (path == [[22, 22, 22], [22, 23, 22]]).all()
