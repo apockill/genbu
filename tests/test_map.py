@@ -3,16 +3,31 @@ import numpy as np
 from fleet import Map
 
 
-def test_nearest_point():
-    """A sanity test"""
+def test_add_and_delete_obstacle():
+    obstacles = np.array([[0, 1, 2], [3, 4, 5], [0, 1, 5], [3, 4, 2]])
+
     map = Map(
         position=(0, 0, 0),
-        direction=90,
-        points=np.array([[i, i * 2, i * 3] for i in range(1000)])
+        direction=0,
+        obstacles=obstacles
     )
+    assert (map.obstacles == obstacles).all()
 
-    pos = map.nearest_known_position((20, 30, 40))
-    assert (pos == [14, 28, 42]).all()
+    # Test obstacle removal
+    map.remove_obstacle([0, 1, 5])
+    assert (map.obstacles == [[0, 1, 2], [3, 4, 5], [3, 4, 2]]).all()
+    map.remove_obstacle([0, 1, 2])
+    assert (map.obstacles == [[3, 4, 5], [3, 4, 2]]).all()
+    map.remove_obstacle([3, 4, 2])
+    assert (map.obstacles == [[3, 4, 5]]).all()
 
-    pos = map.nearest_known_position((800, 900, 1000))
-    assert (pos == [400, 800, 1200]).all()
+    # Test adding obstacles
+    map.add_obstacle([69, 42, 0])
+    assert (map.obstacles == [[3, 4, 5], [69, 42, 0]]).all()
+
+
+    # Test adding to an obstacle list of size(0)
+    map.remove_obstacle([3, 4, 5])
+    map.remove_obstacle([69, 42, 0])
+    map.add_obstacle([1, 2, 3])
+    assert (map.obstacles == [[1, 2, 3]]).all()

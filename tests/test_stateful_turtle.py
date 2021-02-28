@@ -40,9 +40,9 @@ def test_statefile_required():
         (partial(st.dig_towards, Direction.up), StepFinished, StepFinished),
         (partial(st.dig_towards, Direction.down), StepFinished, StepFinished),
         (partial(st.dig_towards, Direction.front), StepFinished, StepFinished),
-        (partial(st.dig_towards, Direction.left), NotImplementedError),
-        (partial(st.dig_towards, Direction.right), NotImplementedError),
-        (partial(st.dig_towards, Direction.back), NotImplementedError),
+        (partial(st.dig_towards, Direction.left), ValueError),
+        (partial(st.dig_towards, Direction.right), ValueError),
+        (partial(st.dig_towards, Direction.back), ValueError),
         # Turn by degrees API
         (partial(st.turn_degrees, 90), StateNotAcquiredError, StepFinished),
         (partial(st.turn_degrees, -90), StateNotAcquiredError, StepFinished),

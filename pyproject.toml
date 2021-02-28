@@ -3,7 +3,7 @@ name = "pycraft"
 version = "0.1.0"
 description = "Messing around with computercraft in python"
 authors = ["Alex Thiel"]
-license = "GPL"
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.8"

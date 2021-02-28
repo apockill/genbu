@@ -12,5 +12,5 @@ from .stateful_turtle import (
     StateRecoveryError
 )
 from fleet import routines
-from .astar import Astar3D
+from .astar import TurtleAstar
 from . import math_utils

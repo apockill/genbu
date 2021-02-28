@@ -201,7 +201,7 @@ class StatefulTurtle:
             elif dir is Direction.front:
                 turtle.dig()
             elif dir in [Direction.back, Direction.left, Direction.right]:
-                raise NotImplementedError("Have yet to add/test this feature!")
+                raise ValueError(f"You can't dig in that direction! {dir}")
         except LuaException as e:
             lua_errors.raise_mapped_error(
                 e, f"Tried to break unbreakable block in direction {dir}",

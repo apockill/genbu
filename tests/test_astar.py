@@ -3,62 +3,61 @@ import random
 import numpy as np
 import pytest
 
-from fleet.astar import Astar3D
+from fleet.astar import TurtleAstar
 from fleet.serializable import Map
-
-random.seed("pycraft")
-
-
-def generate_map() -> Map:
-    astar = Astar3D()
-
-    map = Map(position=(0, 0, 0), direction=0)
-    for i in range(random.randint(0, 1000)):
-        point = map.points[-1].copy() + random.choice(
-            astar.get_neighbors_directions())
-        map._add_point(point)
-    return map
 
 
 @pytest.mark.parametrize(
-    argnames=("fuzzed_map",),
-    argvalues=((generate_map(),) for _ in range(25))
+    argnames=("from_dest", "to_dest", "expected_n_moves", "obstacles"),
+    argvalues=(
+            # Test single obstacles
+            ((0, 0, 0), (4, 0, 1), 6, [[1, 0, 0]]),
+            ((0, 0, 0), (4, 0, 1), 8, [[1, 0, 0], [0, 0, 1]]),
+            # Test cornered against 0 grid (the path should work, and travel
+            # into the negative direction!)
+            ((0, 0, 0), (4, 0, 1), 8, [[1, 0, 0], [0, 0, 1], [0, 1, 0]]),
+            # Test being completely blocked leads to no path
+            ((0, 0, 0), (4, 4, 4), 0,
+             [[1, 0, 0], [0, 0, 1], [0, 1, 0], [0, -1, 0], [-1, 0, 0],
+              [0, 0, -1]]),
+            ((2, 2, 2), (4, 4, 4), 0,
+             [[3, 2, 2], [2, 2, 3], [2, 3, 2], [2, 1, 2], [1, 2, 2],
+              [2, 2, 1]]),
+            # Test cases with no obstacles
+            ((0, 0, 0), (4, 4, 4), 13, []),
+            ((0, 0, 0), (4, 0, 0), 5, []),
+            ((0, 0, 0), (0, 0, 4), 5, []),
+            ((0, 0, 0), (0, 4, 4), 9, []),
+            # Test cases that will have from/to points outside of the obstacle
+            # min/mx
+            ((-5, -4, -3), (30, 30, 30), 103, [[-4, -4, -3], [-3, -4, -3]]),
+    )
 )
-def test_fuzzy_astar_3d(fuzzed_map: Map):
-    """Generate a map then test astar can retrace its steps"""
-    astar = Astar3D()
-    assert (fuzzed_map.offset_points >= [0, 0, 0]).all()
-    start_point = fuzzed_map.points[-1].copy()
-    end_point = fuzzed_map.points[0].copy()
+def test_astar_3d_as_2d(from_dest, to_dest, expected_n_moves, obstacles):
+    """This is a more opinionated test for validating astar3D with exact
+    parameters"""
+    map = Map(
+        position=from_dest,
+        direction=0,
+        obstacles=obstacles
+    )
 
-    path = astar.generate_path(
-        map=fuzzed_map,
-        from_pos=start_point.tolist(),
-        to_pos=end_point.tolist())
+    path = TurtleAstar(map.obstacles).astar(
+        map.position,
+        to_dest
+    )
 
-    # Make sure a path was output, or else
-    assert len(path) != 0 or (start_point == end_point).all(), \
-        "No path was found!"
+    print(path, obstacles)
+    # Make sure the path never leads over any obstacles
+    for pos in path:
+        assert pos not in obstacles
 
-    for point in path:
-        direction = start_point - np.array(point)
-        start_point -= direction
-
-    assert (end_point == start_point).all()
-
-
-def test_no_path_found():
-    astar = Astar3D()
-    map = Map(position=(0, 0, 0),
-              direction=0,
-              points=np.array([(22, 22, 22), (22, 23, 22)]))
-
-    # Test pathfinding fails when unreachable state is requested
-    path = astar.generate_path(map, (22, 23, 22))
-    assert (path == np.array([])).all()
-    assert len(path) == 0
-
-    # Test pathfinding does work on this same map, with a different
-    # start location
-    path = astar.generate_path(map, (22, 23, 22), from_pos=(22, 22, 22))
-    assert (path == [[22, 22, 22], [22, 23, 22]]).all()
+    # Ensure the path actually gets you to the end location
+    if len(path):
+        from_dest = np.array(from_dest)
+        to_dest = np.array(to_dest)
+        for point in path:
+            direction = from_dest - np.array(point)
+            from_dest -= direction
+        assert (to_dest == from_dest).all()
+    assert len(path) == expected_n_moves
