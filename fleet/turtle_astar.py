@@ -19,7 +19,7 @@ class TurtleAstar(AStar):
         move around instead of breaking a block"
         """
         self.map = map
-        self.heuristic_multiplier = e_admissibility
+        self.e_admissibility = e_admissibility
         self.obstacle_cost = obstacle_cost
         super().__init__()
 
@@ -30,8 +30,7 @@ class TurtleAstar(AStar):
     def heuristic_cost_estimate(self, current, goal):
         """Computes the estimated (rough) distance between a node and the goal.
         The second parameter is always the goal."""
-        return np.abs(
-            np.array(goal) - current).sum() * self.heuristic_multiplier
+        return np.abs(np.array(goal) - current).sum()
 
     def distance_between(self, n1, n2):
         """Gives the real distance between two adjacent nodes n1 and n2
@@ -42,12 +41,13 @@ class TurtleAstar(AStar):
         if self.map.is_known_obstacle(n1) or self.map.is_known_obstacle(n2):
             return self.obstacle_cost
         else:
-            return 1
+            return 1 / self.e_admissibility
 
     def neighbors(self, node):
         """For a given node, returns (or yields) the list of its neighbors."""
         return ((node[0] + md[0], node[1] + md[1], node[2] + md[2])
                 for md in NEIGHBOR_DIRECTIONS)
+
 
 def astar(from_pos: Sequence,
           to_pos: Sequence,
