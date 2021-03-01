@@ -101,8 +101,13 @@ class StatefulTurtle:
                 os.sleep(0.1)
             except StepFinished:
                 pass
-            except lua_errors.TurtleBlockedError:
-                print("Turtle is Blocked!")
+            except lua_errors.TurtleBlockedError as e:
+                print(f"Turtle is Blocked! Direction: {e.direction}")
+
+    def step(self):
+        """This is the main logic of the turtle, to be implemented by a
+        subclass."""
+        raise NotImplementedError()
 
     def turn_degrees(self, degrees: int):
         """Turn `degrees` amount. The direction is determined by the sign.
@@ -137,17 +142,21 @@ class StatefulTurtle:
         ])
 
         with self.state:
+
             try:
                 if move_sign == 1:
                     direction = Direction.front
-                    turtle.forward()
+                    lua_errors.convert_errors(turtle.forward)
                 elif move_sign == -1:
                     direction = Direction.back
-                    turtle.back()
-            except LuaException as e:
-                lua_errors.raise_mapped_error(
-                    e, f"Blocked when moving in direction {direction}",
-                    direction=direction)
+                    lua_errors.convert_errors(turtle.back)
+            except lua_errors.TurtleBlockedError as e:
+                if self.direction_verified:
+                    map.add_obstacle(new_position)
+                    self.state.map.write(map)
+                e.direction = direction
+                raise e
+
             if not self.direction_verified:
                 gps_position = gps.locate()
                 # If the move_sign is negative, flip the order of to/from
@@ -174,20 +183,21 @@ class StatefulTurtle:
             map.position[1] + move_sign,
             map.position[2]
         ])
-        map.move_to(new_position)
         with self.state:
             try:
                 if move_sign == 1:
                     direction = Direction.up
-                    turtle.up()
+                    lua_errors.convert_errors(turtle.up)
                 elif move_sign == -1:
                     direction = Direction.down
-                    turtle.down()
-            except LuaException as e:
-                lua_errors.raise_mapped_error(
-                    e, f"Blocked when moving in direction {direction}",
-                    direction=direction)
+                    lua_errors.convert_errors(turtle.down)
+            except lua_errors.TurtleBlockedError as e:
+                map.add_obstacle(new_position)
+                self.state.map.write(map)
+                e.direction = direction
+                raise e
 
+            map.move_to(new_position)
             self.state.map.write(map)
         raise StepFinished()
 
@@ -195,17 +205,16 @@ class StatefulTurtle:
         """Try digging towards a direction"""
         try:
             if dir is Direction.up:
-                turtle.digUp()
+                lua_errors.convert_errors(turtle.digUp)
             elif dir is Direction.down:
-                turtle.digDown()
+                lua_errors.convert_errors(turtle.digDown)
             elif dir is Direction.front:
-                turtle.dig()
+                lua_errors.convert_errors(turtle.dig)
             elif dir in [Direction.back, Direction.left, Direction.right]:
                 raise ValueError(f"You can't dig in that direction! {dir}")
-        except LuaException as e:
-            lua_errors.raise_mapped_error(
-                e, f"Tried to break unbreakable block in direction {dir}",
-                direction=dir)
+        except lua_errors.TurtleBlockedError as e:
+            e.direction = dir
+            raise e
         raise StepFinished()
 
     def dig_up(self):
