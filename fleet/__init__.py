@@ -11,6 +11,7 @@ from .stateful_turtle import (
     StepFinished,
     StateRecoveryError
 )
+from .turtle_astar import astar
+from .navigation_turtle import NavigationTurtle
 from fleet import routines
-from .astar import TurtleAstar
 from . import math_utils
