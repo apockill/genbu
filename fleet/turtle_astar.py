@@ -52,7 +52,7 @@ class TurtleAstar(AStar):
 def astar(from_pos: Sequence,
           to_pos: Sequence,
           map: Map,
-          e_admissibility: int,
+          e_admissibility: float,
           obstacle_cost=10):
     """
     :param from_pos: Where from

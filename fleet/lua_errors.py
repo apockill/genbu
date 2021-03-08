@@ -60,7 +60,7 @@ def map_error(exc: LuaException, message=None, **kwargs):
         return exc
 
 
-def convert_errors(fn, *args, **kwargs):
+def run(fn, *args, **kwargs):
     """Try a function and convert any LuaExceptions"""
     try:
         fn(*args, **kwargs)
