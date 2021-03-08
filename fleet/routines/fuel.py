@@ -1,51 +1,28 @@
 from cc import turtle
+
 from computercraft.errors import LuaException
+from fleet import math_utils, NavigationTurtle, lua_errors, StepFinished
+
+FUEL_SLOT = 1
 
 
-def refuel():
-    """Top off fuel if necessary"""
-    while turtle.getFuelLevel() < 300:
-        # Pick the most preferred fuel
-        fuel_slots = scan_for_fuel()
-        if len(fuel_slots):
-            turtle.select(fuel_slots[0])
-            turtle.refuel(1)
-        else:
-            print("No fuel found!")
+def maybe_refuel(nav_turtle: NavigationTurtle, refuel_spot):
+    """Top off fuel if necessary. This function roughly predicts the distance to
+    refuel and decides if it's necessary to refuel"""
 
+    if turtle.getFuelLevel() < turtle.getFuelLimit() * 0.5:
+        # Whether we are consuming fuel or getting it from a chest, we always
+        # want to do so from the fuel slot
+        turtle.select(FUEL_SLOT)
 
-def scan_for_fuel():
-    """Only consume the highest-fuel slot"""
-    preference = []
-    """List of item slots -> preference. Coal is preferred"""
+        # Try to consume fuel
+        if turtle.getItemCount(FUEL_SLOT) > 1:
+            try:
+                lua_errors.run(turtle.refuel, 1)
+                raise StepFinished
+            except lua_errors.ItemNotCombustibleError as e:
+                print("OH NO!", e)
 
-    for i in range(1, 17):
-        if turtle.getItemCount(i) == 0:
-            continue
-
-        name = turtle.getItemDetail(i)[b"name"]
-        whitelisted_fuels = [
-            b"minecraft:coal_block",
-            b"minecraft:charcoal_block",
-            b"minecraft:coal",
-            b"minecraft:charcoal",
-        ]
-        is_whitelisted = name in whitelisted_fuels
-
-        if is_whitelisted:
-            preference.append((i, 1))
-            continue
-
-        turtle.select(i)
-        try:
-            turtle.refuel(0)
-            preference.append((i, 0))
-            continue
-        except LuaException as e:
-            if e.message == "Items not combustible":
-                # Try the next slot
-                continue
-            raise
-
-    preference.sort(key=lambda i: i[1], reverse=True)
-    return [p[0] for p in preference]
+        # Go grab fuel
+        nav_turtle.move_toward(to_pos=refuel_spot)
+        turtle.suckDown()
