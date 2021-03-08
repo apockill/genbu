@@ -22,3 +22,9 @@ def test_is_adjacent():
     for direction in math_utils.NEIGHBOR_DIRECTIONS:
         assert math_utils.is_adjacent(direction, [0, 0, 0])
         assert not math_utils.is_adjacent(direction, [1, 1, 1])
+
+
+def test_distance():
+    """Sanity test"""
+    distance = math_utils.distance(np.array([1, 2, 3]), np.array([6, 7, 12]))
+    assert distance == 11.445523142259598

@@ -54,3 +54,13 @@ def is_adjacent(pos1: np.ndarray, pos2: np.ndarray):
         if ((pos1 + direction) == pos2).all():
             return True
     return False
+
+
+def distance(pos1: np.ndarray, pos2: np.ndarray):
+    """Returns the exact distance between two points"""
+    return np.linalg.norm(pos1 - pos2)
+
+
+def turtle_distance(pos1: np.ndarray, pos2: np.ndarray):
+    """Returns the non-diagonal movement distance for a turtle"""
+    return np.abs(pos1 - pos2).sum()
