@@ -34,6 +34,7 @@ class NavigationTurtle(StatefulTurtle):
             to_pos=to_pos,
             map=map,
             obstacle_cost=path_obstacle_cost,
+            e_admissibility=1.1
         )
         next_pos = np.array(path[1:][0])
 
