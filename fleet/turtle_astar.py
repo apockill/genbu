@@ -52,8 +52,19 @@ class TurtleAstar(AStar):
 def astar(from_pos: Sequence,
           to_pos: Sequence,
           map: Map,
-          obstacle_cost=10,
-          e_admissibility=2):
+          e_admissibility: int,
+          obstacle_cost=10):
+    """
+    :param from_pos: Where from
+    :param to_pos: Where to
+    :param map: The map storing locations of obstacles
+    :param e_admissibility: An admissibility of 1 will lead to the most optimal
+    path but will be expensive to calculate.
+    Anything over 1 will be substantially cheaper, but may lead to non-optimal
+    paths.
+    :param obstacle_cost:
+    :return:
+    """
     if isinstance(from_pos, np.ndarray):
         from_pos = from_pos.tolist()
     if isinstance(to_pos, np.ndarray):
