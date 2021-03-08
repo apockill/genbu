@@ -130,8 +130,7 @@ def test_obstacle_cost(
         obstacle_cost=obstacle_cost,
         e_admissibility=1
     )
-    # print("OBSTACLES", obstacles)
-    # print("PATH", path)
+
     assert path_obstructed == obstructed
     assert expected_n_moves == len(path)
 
