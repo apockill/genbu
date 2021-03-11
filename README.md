@@ -12,12 +12,12 @@ Then on a turtle, add the following startup program
 wget http://127.0.0.1:8080/ py
 ```
 
-Write in `startup`
+Run `edit startup` and paste
 ```lua
 while true do shell.run("py", "main.py"); os.sleep(2); end
 ```
 
-Write in `main.py`
+Run `edit main.py` and paste
 ```
 exec(open("programs/quarry.py").read())
 ```
