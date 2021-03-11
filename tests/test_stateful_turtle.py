@@ -94,10 +94,11 @@ def test_statefile_required():
         ((0, 1, 0), (0, 1, -1), None),
         # Test no GPS available
         ((0, 1, 0), None, StateRecoveryError),
-        # Test not next to an adjacent block
-        ((0, 2, 0), (0, 0, 0), StateRecoveryError),
-        ((0, -2, 0), (0, 0, 0), StateRecoveryError),
-        ((1, 1, 0), (0, 0, 0), StateRecoveryError),
+        # Test not next to an adjacent block (these yield OSErrors because
+        # pytest raises OSError when input() is called)
+        ((0, 2, 0), (0, 0, 0), OSError),
+        ((0, -2, 0), (0, 0, 0), OSError),
+        ((1, 1, 0), (0, 0, 0), OSError),
     ])
 )
 def test_gps_recovery(state_pos,
