@@ -30,9 +30,12 @@ class Map(BaseSerializable):
 
     def move_to(self, position: Union[np.ndarray, Tuple]):
         """Move to an adjacent block relative to the current position"""
-        assert is_adjacent(position, self.position), \
-            "You can't move to a non adjacent position!"
-
+        if not is_adjacent(position, self.position):
+            msg = ("The turtle was asked to move to a non-adjacent position! "
+                   f"Last known position: {self.position}, "
+                   f"Move position: {position} "
+                   "\nPress 'Enter' to continue anyway:")
+            input(msg)
         position = np.array(position)
         self.remove_obstacle(position)
         self.position = position

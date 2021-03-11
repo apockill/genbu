@@ -84,13 +84,7 @@ class StatefulTurtle:
             map = self.state.map.read()
             last_known_location = map.position
             if (last_known_location != gps_loc).any():
-
                 print("Warning! State file is out of sync!")
-                if not math_utils.is_adjacent(last_known_location, gps_loc):
-                    msg = ("The statefile is out of sync! GPS reports a pos of "
-                           f"{gps_loc} but state pos is {last_known_location}. "
-                           "\nPress 'Enter' to continue anyway:")
-                    input(msg)
                 map.move_to(gps_loc)
                 self.state.map.write(map)
 
