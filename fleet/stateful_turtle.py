@@ -93,10 +93,11 @@ class StatefulTurtle:
         turtle.select(1)
 
         while True:
+            # Let other turtles have a chance
+            os.sleep(0.1)
             try:
                 with self.state as state:
                     self.step(state)
-                os.sleep(0.1)
             except StepFinished:
                 pass
             except lua_errors.TurtleBlockedError as e:

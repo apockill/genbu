@@ -26,7 +26,6 @@ class NavigationTurtle(StatefulTurtle):
 
         if curr_pos == to_pos:
             # Already at position!
-            print("Already at position!")
             return
 
         path, path_obstructed = astar(
