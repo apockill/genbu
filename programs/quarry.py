@@ -6,8 +6,10 @@ from fleet import (
     routines,
     StateAttr,
     PromptStateAttr,
-    lua_errors)
-from fleet.math_utils import sign, angle_between, is_adjacent
+    lua_errors,
+    NavigationTurtle,
+    StepFinished
+)
 
 
 def parse_position(val: str):
