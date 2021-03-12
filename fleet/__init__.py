@@ -9,7 +9,8 @@ from .stateful_turtle import (
     StatefulTurtle,
     Direction,
     StepFinished,
-    StateRecoveryError
+    StateRecoveryError,
+    MinedBlacklistedBlockError
 )
 from .turtle_astar import astar
 from .navigation_turtle import NavigationTurtle

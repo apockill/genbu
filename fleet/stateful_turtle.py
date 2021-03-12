@@ -1,3 +1,4 @@
+import re
 from enum import Enum, auto
 from typing import Tuple
 from math import cos, sin, radians
@@ -5,8 +6,7 @@ from math import cos, sin, radians
 import numpy as np
 
 from cc import turtle, os, gps
-from computercraft.errors import LuaException
-from fleet import StateFile, StateAttr, Map, math_utils, lua_errors
+from fleet import StateFile, StateAttr, Map, math_utils, lua_errors, block_info
 
 
 class StepFinished(Exception):
@@ -17,6 +17,11 @@ class StateRecoveryError(Exception):
     """This exception occurs on turtle startup if it's determined that the
     state file was corrupted, or if it's unable to determine the veracity of
     the state file."""
+
+
+class MinedBlacklistedBlockError(Exception):
+    """This exception is raised when a turtle tries to mine a blacklisted block
+    """
 
 
 class Direction(Enum):
@@ -205,18 +210,38 @@ class StatefulTurtle:
 
     def dig_towards(self, dir: Direction):
         """Try digging towards a direction"""
+        actions = {
+            Direction.up: (turtle.inspectUp, turtle.digUp),
+            Direction.down: (turtle.inspectDown, turtle.digDown),
+            Direction.front: (turtle.inspect, turtle.dig)
+        }
+
+        if dir not in actions:
+            raise ValueError(f"You can't dig in that direction! {dir}")
+
+        inspect, dig = actions[dir]
+
+        # Inspect the block about to be dug to verify it's not blacklisted
+        inspected_block_info = inspect()
+        if inspected_block_info is None:
+            # Nothing to dig!
+            print("Digging towards empty air!")
+            return
+        inspected_block_name = inspected_block_info[b"name"].decode("utf-8")
+
+        blacklisted_regex = '(?:% s)' % '|'.join(block_info.do_not_mine)
+        if re.match(blacklisted_regex, inspected_block_name):
+            msg = ("Tried to mine blacklisted block: "
+                   f"{inspected_block_name}")
+            raise MinedBlacklistedBlockError(msg)
+
+        # Actually dig the block
         try:
-            if dir is Direction.up:
-                lua_errors.run(turtle.digUp)
-            elif dir is Direction.down:
-                lua_errors.run(turtle.digDown)
-            elif dir is Direction.front:
-                lua_errors.run(turtle.dig)
-            elif dir in [Direction.back, Direction.left, Direction.right]:
-                raise ValueError(f"You can't dig in that direction! {dir}")
-        except lua_errors.TurtleBlockedError as e:
+            lua_errors.run(dig)
+        except lua_errors.UnbreakableBlockError as e:
             e.direction = dir
             raise e
+
         raise StepFinished()
 
     def dig_up(self):
