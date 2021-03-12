@@ -14,7 +14,8 @@ from fleet import (
     StateNotAcquiredError,
     StepFinished,
     StateRecoveryError,
-    lua_errors
+    lua_errors,
+    MinedBlacklistedBlockError
 )
 
 
@@ -120,7 +121,7 @@ def test_gps_recovery(state_pos,
         if expected_error is None:
             turtle = StatefulTurtle()
         else:
-            with pytest.raises(StateRecoveryError):
+            with pytest.raises(expected_error):
                 StatefulTurtle()
 
 
@@ -171,6 +172,46 @@ def test_dig_towards(is_bedrock_blocked: bool,
                 assert val.called
             else:
                 assert not val.called
+
+
+@pytest.mark.parametrize(
+    argnames=("dig_fn", "block_name", "is_mineable", "turtle_inspect_fn"),
+    argvalues=[
+        # Test "happy path"
+        (dig_fn, block_name, is_mineable, turtle_inspect_fn)
+        for block_name, is_mineable in [
+            ("computercraft:turtle", False),
+            ("computercraft:thisshouldmatchregex", False),
+            ("fake-mod:this-matches-nothing-in-the-blacklist", True),
+            ("cool:chest", False),
+            ("chest:oh-no-dont-mine-me", False),
+        ]
+        for dig_fn, turtle_inspect_fn in [
+            ("dig_up", "inspectUp"),
+            ("dig_down", "inspectDown"),
+            ("dig_front", "inspect")
+        ]
+    ],
+
+)
+def test_dig_towards_blacklisted_block(dig_fn: str,
+                                       turtle_inspect_fn,
+                                       block_name: str,
+                                       is_mineable: bool):
+    turtle = StatefulTurtle()
+
+    # Mirror the output of turtle.inspect()
+    inspect_retval = {
+        b"state": {b"facing": b"south", b"waterlogged": False},
+        b"name": bytes(block_name, encoding="ascii"),
+        b"tags": {}}
+    expected_exception = StepFinished if is_mineable else MinedBlacklistedBlockError
+
+    with mock.patch.object(cc.turtle, turtle_inspect_fn) as inspect_front:
+        inspect_front.return_value = inspect_retval
+        # TODO: Make a good exception for this
+        with pytest.raises(expected_exception):
+            turtle.__getattribute__(dig_fn)()
 
 
 @pytest.mark.parametrize(
