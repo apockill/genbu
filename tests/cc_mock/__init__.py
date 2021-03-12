@@ -42,6 +42,14 @@ class FS:
 
 
 class Turtle:
+    __boring_inspect_val = {
+        b"state": {b"facing": b"south", b"waterlogged": False},
+        b"name": b"boring-mod:boring-block",
+        b"tags": {}}
+    """The value for inspect*() functions. Those functions are to be 
+    mocked if any tests are to be done on them. 
+    """
+
     def digUp(self):
         pass
 
@@ -68,6 +76,15 @@ class Turtle:
 
     def back(self):
         pass
+
+    def inspect(self):
+        return self.__boring_inspect_val
+
+    def inspectUp(self):
+        return self.__boring_inspect_val
+
+    def inspectDown(self):
+        return self.__boring_inspect_val
 
 
 class OS:
