@@ -1,4 +1,5 @@
 import json
+import copy
 from pathlib import Path
 from typing import Any, Callable
 
@@ -81,6 +82,10 @@ class StateFile:
         self.dict = None
         """When being held, this shows all the key/value pairs of state"""
 
+        self._last_saved_dict = None
+        """Used to prevent saving to the StateFile when it's deemed unnecessary
+        """
+
         self.being_held = 0
         """When this hits 0 on __exit__, all things are saved to the file"""
 
@@ -100,18 +105,23 @@ class StateFile:
         if self.dict is None:
             # Only refresh state if no one is currently 'holding' state
             self.dict = self.read_dict()
+            self._last_saved_dict = copy.deepcopy(self.dict)
 
         # Keep track of state holders
         self.being_held += 1
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.write_dict(self.dict)
+        if self.dict != self._last_saved_dict:
+            self.write_dict(self.dict)
+            self._last_saved_dict = copy.deepcopy(self.dict)
+
         self.being_held -= 1
         assert self.being_held >= 0
 
         if self.being_held == 0:
             self.dict = None
+            self._last_saved_dict = None
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
@@ -142,9 +152,5 @@ class StateFile:
         if self._state_path.is_file():
             return
 
-        # Get all the defaults by temporarily creating self.dict, writing down
-        # all the defaults, writing that to the state file, then setting it
-        # back to None for safety.
-        self.dict = {}
-        self.write_dict(self.dict)
-        self.dict = None
+        # Create a clean-slate statefile
+        self.write_dict({})
