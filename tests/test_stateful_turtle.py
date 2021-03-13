@@ -50,16 +50,23 @@ def test_statefile_required():
         (partial(st.turn_degrees, 0), None),
         (partial(st.turn_degrees, 10), ValueError),
         # Move by sign vertically API
-        (partial(st.move_vertically, 1), StateNotAcquiredError, StepFinished),
-        (partial(st.move_vertically, -1), StateNotAcquiredError, StepFinished),
-        (partial(st.move_vertically, 0), ValueError),
-        (partial(st.move_vertically, 25), ValueError),
-        # Move by sign forward/backwards API
-        (partial(st.move_in_direction, 1), StateNotAcquiredError, StepFinished),
-        (partial(st.move_in_direction, -1), StateNotAcquiredError,
+        (partial(st._move_vertically, Direction.up), StateNotAcquiredError,
          StepFinished),
-        (partial(st.move_in_direction, 55), ValueError),
-        (partial(st.move_in_direction, 0), ValueError),
+        (partial(st._move_vertically, Direction.down), StateNotAcquiredError,
+         StepFinished),
+        (partial(st._move_vertically, Direction.left), ValueError),
+        (partial(st._move_vertically, Direction.right), ValueError),
+        (partial(st._move_vertically, Direction.front), ValueError),
+        (partial(st._move_vertically, Direction.back), ValueError),
+        # Move by sign forward/backwards API
+        (partial(st._move_in_direction, Direction.front), StateNotAcquiredError,
+         StepFinished),
+        (partial(st._move_in_direction, Direction.back), StateNotAcquiredError,
+         StepFinished),
+        (partial(st._move_in_direction, Direction.left), ValueError),
+        (partial(st._move_in_direction, Direction.right), ValueError),
+        (partial(st._move_in_direction, Direction.up), ValueError),
+        (partial(st._move_in_direction, Direction.down), ValueError),
     ]
     for fn, *error in movement_fns:
         if len(error) == 1:
