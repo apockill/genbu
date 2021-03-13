@@ -6,7 +6,8 @@ from math import cos, sin, radians
 import numpy as np
 
 from cc import turtle, os, gps
-from fleet import StateFile, StateAttr, Map, math_utils, lua_errors, block_info
+from fleet import StateFile, StateAttr, Map, math_utils, lua_errors, block_info, \
+    Direction
 
 
 class StepFinished(Exception):
@@ -22,15 +23,6 @@ class StateRecoveryError(Exception):
 class MinedBlacklistedBlockError(Exception):
     """This exception is raised when a turtle tries to mine a blacklisted block
     """
-
-
-class Direction(Enum):
-    up = auto()
-    down = auto()
-    front = auto()
-    back = auto()
-    left = auto()
-    right = auto()
 
 
 class StatefulTurtle:
@@ -254,16 +246,16 @@ class StatefulTurtle:
         self.dig_towards(Direction.front)
 
     def up(self):
-        self.move_vertically(1)
+        self._move_vertically(Direction.up)
 
     def down(self):
-        self.move_vertically(-1)
+        self._move_vertically(Direction.down)
 
     def forward(self):
-        self.move_in_direction(1)
+        self._move_in_direction(Direction.front)
 
     def backward(self):
-        self.move_in_direction(-1)
+        self._move_in_direction(Direction.back)
 
     def turn_right(self):
         self.turn_degrees(90)
