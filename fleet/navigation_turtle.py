@@ -44,8 +44,10 @@ class NavigationTurtle(StatefulTurtle):
             f"The move must be to an adjacent path! {next_pos}"
 
         try:
-            if dist[1] != 0:
-                self.move_vertically(dist[1])
+            if dist[1] > 0:
+                self.up()
+            elif dist[1] < 0:
+                self.down()
             elif dist[0] != 0 or dist[2] != 0:
                 self.turn_toward(next_pos)
                 self.forward()
