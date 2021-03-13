@@ -2,7 +2,9 @@ import numpy as np
 
 from math import atan2, degrees, cos, sin, radians
 
-NEIGHBOR_DIRECTIONS = np.array(
+from fleet.direction import Direction
+
+NEIGHBOR_COORDS = np.array(
     [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0],
      [0, 0, -1]])
 """All possible directions a turtle could go relative to a block"""
@@ -17,7 +19,7 @@ ANGLES = {
 representation"""
 
 
-def get_direction(from_pos: np.ndarray, to_pos: np.ndarray):
+def get_angle(from_pos: np.ndarray, to_pos: np.ndarray):
     """Get the direction of a vector going from that position to the next
     This function is purposely simply for perf and the nicety of having clear
     errors if I misuse this.
@@ -50,7 +52,7 @@ def angle_between(pos1, pos2):
 
 def is_adjacent(pos1: np.ndarray, pos2: np.ndarray):
     """Returns True if pos1 is adjacent to pos2"""
-    for direction in NEIGHBOR_DIRECTIONS:
+    for direction in NEIGHBOR_COORDS:
         if ((pos1 + direction) == pos2).all():
             return True
     return False
@@ -64,3 +66,28 @@ def distance(pos1: np.ndarray, pos2: np.ndarray):
 def turtle_distance(pos1: np.ndarray, pos2: np.ndarray):
     """Returns the non-diagonal movement distance for a turtle"""
     return np.abs(pos1 - pos2).sum()
+
+
+def coordinate_in_turtle_direction(curr_pos: np.ndarray,
+                                   curr_angle: float,
+                                   direction: Direction) -> np.ndarray:
+    curr_x, curr_y, curr_z = curr_pos
+    # TODO: Test
+    if direction is Direction.up:
+        return np.array((curr_x, curr_y + 1, curr_z))
+    elif direction is Direction.down:
+        return np.array((curr_x, curr_y - 1, curr_z))
+    else:
+        move_sign = 1
+        if direction is Direction.right:
+            curr_angle += 90
+        elif direction is Direction.left:
+            curr_angle -= 90
+        elif direction is Direction.back:
+            move_sign = -1
+
+        return np.array([
+            round(move_sign * cos(radians(curr_angle))) + curr_x,
+            curr_y,
+            round(move_sign * sin(radians(curr_angle))) + curr_z
+        ])
