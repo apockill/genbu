@@ -1,3 +1,4 @@
+from .direction import Direction
 from .state_file import (
     StateAttr,
     StateFile,
@@ -7,7 +8,6 @@ from .state_file import (
 from .serializable import *
 from .stateful_turtle import (
     StatefulTurtle,
-    Direction,
     StepFinished,
     StateRecoveryError,
     MinedBlacklistedBlockError

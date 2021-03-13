@@ -1,6 +1,6 @@
 import numpy as np
 
-from math import atan2, degrees
+from math import atan2, degrees, cos, sin, radians
 
 NEIGHBOR_DIRECTIONS = np.array(
     [[1, 0, 0], [0, 1, 0], [0, 0, 1], [-1, 0, 0], [0, -1, 0],
