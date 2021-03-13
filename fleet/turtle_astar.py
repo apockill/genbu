@@ -1,6 +1,6 @@
 from typing import Sequence
 
-from fleet.math_utils import NEIGHBOR_DIRECTIONS
+from fleet.math_utils import NEIGHBOR_COORDS
 from fleet import Map
 
 import numpy as np
@@ -46,7 +46,7 @@ class TurtleAstar(AStar):
     def neighbors(self, node):
         """For a given node, returns (or yields) the list of its neighbors."""
         return ((node[0] + md[0], node[1] + md[1], node[2] + md[2])
-                for md in NEIGHBOR_DIRECTIONS)
+                for md in NEIGHBOR_COORDS)
 
 
 def astar(from_pos: Sequence,
