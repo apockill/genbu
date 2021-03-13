@@ -72,7 +72,7 @@ def coordinate_in_turtle_direction(curr_pos: np.ndarray,
                                    curr_angle: float,
                                    direction: Direction) -> np.ndarray:
     curr_x, curr_y, curr_z = curr_pos
-    # TODO: Test
+
     if direction is Direction.up:
         return np.array((curr_x, curr_y + 1, curr_z))
     elif direction is Direction.down:
