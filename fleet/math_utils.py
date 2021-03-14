@@ -68,6 +68,22 @@ def turtle_distance(pos1: np.ndarray, pos2: np.ndarray):
     return np.abs(pos1 - pos2).sum()
 
 
+def within_bounding_points(point, bp1, bp2):
+    """
+    Bounding points are inclusive
+    :param bp1: Bounding point 1
+    :param bp2: Bounding point 2
+    :param point: Point to test
+    :return:
+    """
+    min_x, max_x = sorted([bp1[0], bp2[0]])
+    min_y, max_y = sorted([bp1[1], bp2[1]])
+    min_z, max_z = sorted([bp1[2], bp2[2]])
+    return (min_x <= point[0] <= max_x
+            and min_y <= point[1] <= max_y
+            and min_z <= point[2] <= max_z)
+
+
 def coordinate_in_turtle_direction(curr_pos: np.ndarray,
                                    curr_angle: float,
                                    direction: Direction) -> np.ndarray:
