@@ -1,5 +1,4 @@
 import re
-from enum import Enum, auto
 from typing import Tuple
 from math import cos, sin, radians
 
@@ -58,7 +57,7 @@ class StatefulTurtle:
         if gps_loc is None:
             raise StateRecoveryError(
                 "The turtle must have a wireless modem and be "
-                "within range of GPS sattellites!")
+                "within range of GPS satellites!")
 
         self.state = StateFile()
         """Representing (x, y, z) positions"""
@@ -76,14 +75,14 @@ class StatefulTurtle:
 
     def _maybe_recover_location(self, gps_loc: Tuple[int, int, int]):
         """Validate state based on GPS data"""
-        with self.state:
+        with self.state as state:
             # Check if any crash recovery needs to be done here
-            map = self.state.map.read()
+            map = state.map.read()
             last_known_location = map.position
             if (last_known_location != gps_loc).any():
                 print("Warning! State file is out of sync!")
                 map.move_to(gps_loc)
-                self.state.map.write(map)
+                state.map.write(map)
 
     def run(self):
         # Set up initial state
@@ -124,27 +123,27 @@ class StatefulTurtle:
             self.state.map.write(map)
         raise StepFinished()
 
-    def move_in_direction(self, move_sign: int):
+    def _move_in_direction(self, direction: Direction):
+        # TODO: Consider changing from move_sign to Direction enum
         """Move forwards or backwards in the sign of direction"""
-        if move_sign not in (1, -1):
-            raise ValueError(f"Invalid value for move_sign: {move_sign}")
+        if direction not in (direction.front, direction.back):
+            raise ValueError(f"Invalid value for direction: {direction}")
 
         map = self.state.map.read()
         old_position = map.position
-        new_position = np.array([
-            round(move_sign * cos(radians(map.direction))) + map.position[0],
-            map.position[1],
-            round(move_sign * sin(radians(map.direction))) + map.position[2]
-        ])
+        # TODO: Switch to something from math
+        new_position = math_utils.coordinate_in_turtle_direction(
+            curr_pos=map.position,
+            curr_angle=map.direction,
+            direction=direction
+        )
 
         with self.state:
 
             try:
-                if move_sign == 1:
-                    direction = Direction.front
+                if direction is Direction.front:
                     lua_errors.run(turtle.forward)
-                elif move_sign == -1:
-                    direction = Direction.back
+                elif direction is Direction.back:
                     lua_errors.run(turtle.back)
             except lua_errors.TurtleBlockedError as e:
                 # TODO: Think of something smart to do when direction isn't
@@ -160,8 +159,9 @@ class StatefulTurtle:
                 gps_position = gps.locate()
                 # If the move_sign is negative, flip the order of to/from
                 # to represent a move backwards
-                to_from = (old_position, gps_position)[::move_sign]
-                verified_direction = math_utils.get_direction(*to_from)
+                sign = 1 if direction is Direction.front else -1
+                to_from = (old_position, gps_position)[::sign]
+                verified_direction = math_utils.get_angle(*to_from)
                 new_position = gps_position
                 map.direction = verified_direction
 
@@ -172,22 +172,21 @@ class StatefulTurtle:
             self.state.map.write(map)
         raise StepFinished()
 
-    def move_vertically(self, move_sign: int):
-        if move_sign not in (1, -1):
-            raise ValueError(f"Invalid value for move_sign: {move_sign}")
+    def _move_vertically(self, direction: Direction):
+        if direction not in (Direction.up, Direction.down):
+            raise ValueError(f"Invalid value for direction: {direction}")
 
         map = self.state.map.read()
-        new_position = np.array([
-            map.position[0],
-            map.position[1] + move_sign,
-            map.position[2]
-        ])
+        new_position = math_utils.coordinate_in_turtle_direction(
+            curr_pos=map.position,
+            curr_angle=map.direction,
+            direction=direction
+        )
         with self.state:
             try:
-                if move_sign == 1:
-                    direction = Direction.up
+                if direction is Direction.up:
                     lua_errors.run(turtle.up)
-                elif move_sign == -1:
+                elif direction is direction.down:
                     direction = Direction.down
                     lua_errors.run(turtle.down)
             except lua_errors.TurtleBlockedError as e:
@@ -234,6 +233,18 @@ class StatefulTurtle:
             e.direction = dir
             raise e
 
+        # Since the block was successfully removed, remove it as a potential
+        # obstacle in the map.
+        with self.state as state:
+            map = state.map.read()
+            obstacle_position = math_utils.coordinate_in_turtle_direction(
+                curr_pos=map.position,
+                curr_angle=map.direction,
+                direction=dir
+            )
+            map.remove_obstacle(obstacle_position)
+            state.map.write(map)
+        # TODO: Have the turtle remove the known obstacle in this direction
         raise StepFinished()
 
     def dig_up(self):
