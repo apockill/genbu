@@ -3,7 +3,7 @@ from typing import Dict, Any, Union, Tuple, List
 import numpy as np
 from scipy.spatial import cKDTree
 
-from fleet.math_utils import is_adjacent
+from fleet import math_utils
 from fleet.serializable.base import BaseSerializable
 
 
@@ -30,7 +30,7 @@ class Map(BaseSerializable):
 
     def move_to(self, position: Union[np.ndarray, Tuple]):
         """Move to an adjacent block relative to the current position"""
-        if not is_adjacent(position, self.position):
+        if math_utils.turtle_distance(position, self.position) > 2:
             msg = ("The turtle was asked to move to a non-adjacent position! "
                    f"Last known position: {self.position}, "
                    f"Move position: {position} "
