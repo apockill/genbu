@@ -6,7 +6,6 @@ import pytest
 import numpy as np
 from computercraft.errors import LuaException
 
-import fleet.stateful_turtle
 from tests import cc_mock as cc
 from fleet import (
     StatefulTurtle,
