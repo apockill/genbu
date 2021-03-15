@@ -1,7 +1,6 @@
 from typing import Dict, Any, Union, Tuple, List
 
 import numpy as np
-from scipy.spatial import cKDTree
 
 from fleet import math_utils
 from fleet.serializable.base import BaseSerializable
