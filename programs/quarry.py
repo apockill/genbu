@@ -1,4 +1,5 @@
-from typing import List
+from functools import lru_cache
+from typing import List, Optional
 
 import numpy as np
 
@@ -9,12 +10,9 @@ from fleet import (
     lua_errors,
     NavigationTurtle,
     StepFinished,
-    math_utils
+    math_utils,
+    user_input
 )
-
-
-def parse_position(val: str):
-    return np.array(list(map(int, val.split(" "))))
 
 
 # quarry.py
@@ -25,7 +23,7 @@ class QuarryTurtle(NavigationTurtle):
             initial_loc = self.state.map.read().position
         self.state.fuel_loc = PromptStateAttr(
             self.state, "fuel_loc",
-            parser=parse_position,
+            parser=user_input.parse_position(3),
             default=initial_loc)
 
         with self.state:
@@ -33,15 +31,15 @@ class QuarryTurtle(NavigationTurtle):
 
         self.state.dump_loc = PromptStateAttr(
             self.state, "dump_loc",
-            parser=parse_position,
+            parser=user_input.parse_position(3),
             default=np.array([hx + 2, hy, hz]))
         self.state.mining_x1z1 = PromptStateAttr(
             self.state, "mining_x1z1",
-            parser=parse_position,
+            parser=user_input.parse_position(2),
             default=np.array((hx + 10, hz)))
         self.state.mining_x2z2 = PromptStateAttr(
             self.state, "mining_x2z2",
-            parser=parse_position,
+            parser=user_input.parse_position(2),
             default=np.array((hx + 110, hz + 100)))
         self.state.dig_height = PromptStateAttr(
             self.state, "dig_height",
