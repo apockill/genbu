@@ -18,7 +18,47 @@ from fleet import (
 )
 
 
-def test_statefile_required():
+@pytest.mark.parametrize(
+    argnames=("fn_name", "args", "wo_statefile_err", "w_statefile_err"),
+    argvalues=[
+        # Simple turns
+        ("up", (), StateNotAcquiredError, StepFinished),
+        ("down", (), StateNotAcquiredError, StepFinished),
+        ("turn_left", (), StateNotAcquiredError, StepFinished),
+        ("turn_right", (), StateNotAcquiredError, StepFinished),
+        ("forward", (), StateNotAcquiredError, StepFinished),
+        ("backward", (), StateNotAcquiredError, StepFinished),
+        # Digging mechanics
+        ("dig_in_direction", (Direction.up,), StepFinished, StepFinished),
+        ("dig_in_direction", (Direction.down,), StepFinished, StepFinished),
+        ("dig_in_direction", (Direction.front,), StepFinished, StepFinished),
+        ("dig_in_direction", (Direction.left,), ValueError, ValueError),
+        ("dig_in_direction", (Direction.right,), ValueError, ValueError),
+        ("dig_in_direction", (Direction.back,), ValueError, ValueError),
+        # Turn by degrees API
+        ("turn_degrees", (90,), StateNotAcquiredError, StepFinished),
+        ("turn_degrees", (-90,), StateNotAcquiredError, StepFinished),
+        ("turn_degrees", (0,), None, None),
+        ("turn_degrees", (10,), ValueError, ValueError),
+        # Use move_in_direction incorrectly
+        ("move_in_direction", (Direction.left,), ValueError, ValueError),
+        ("move_in_direction", (Direction.right,), ValueError, ValueError),
+        # Move by sign forward/backwards API
+        ("move_in_direction", (Direction.front,), StateNotAcquiredError,
+         StepFinished),
+        ("move_in_direction", (Direction.back,), StateNotAcquiredError,
+         StepFinished),
+        ("move_in_direction", (Direction.up,), StateNotAcquiredError,
+         StepFinished),
+        ("move_in_direction", (Direction.down,), StateNotAcquiredError,
+         StepFinished),
+    ]
+)
+def test_statefile_required(
+        fn_name,
+        args,
+        wo_statefile_err,
+        w_statefile_err):
     """Test that a statefile is required for certain operations"""
 
     st = StatefulTurtle()
@@ -26,67 +66,20 @@ def test_statefile_required():
     # Pretend this turtle is already "position verified" in every way
     st.direction_verified = True
 
-    # A list of tuples in the form of
-    # (function, error expected w/o state file, error expected with state file)
-    movement_fns = [
-        # Simple turns
-        (st.up, StateNotAcquiredError, StepFinished),
-        (st.down, StateNotAcquiredError, StepFinished),
-        (st.turn_left, StateNotAcquiredError, StepFinished),
-        (st.turn_right, StateNotAcquiredError, StepFinished),
-        (st.forward, StateNotAcquiredError, StepFinished),
-        (st.backward, StateNotAcquiredError, StepFinished),
-        # Digging mechanics
-        (partial(st.dig_towards, Direction.up), StepFinished, StepFinished),
-        (partial(st.dig_towards, Direction.down), StepFinished, StepFinished),
-        (partial(st.dig_towards, Direction.front), StepFinished, StepFinished),
-        (partial(st.dig_towards, Direction.left), ValueError),
-        (partial(st.dig_towards, Direction.right), ValueError),
-        (partial(st.dig_towards, Direction.back), ValueError),
-        # Turn by degrees API
-        (partial(st.turn_degrees, 90), StateNotAcquiredError, StepFinished),
-        (partial(st.turn_degrees, -90), StateNotAcquiredError, StepFinished),
-        (partial(st.turn_degrees, 0), None),
-        (partial(st.turn_degrees, 10), ValueError),
-        # Move by sign vertically API
-        (partial(st._move_vertically, Direction.up), StateNotAcquiredError,
-         StepFinished),
-        (partial(st._move_vertically, Direction.down), StateNotAcquiredError,
-         StepFinished),
-        (partial(st._move_vertically, Direction.left), ValueError),
-        (partial(st._move_vertically, Direction.right), ValueError),
-        (partial(st._move_vertically, Direction.front), ValueError),
-        (partial(st._move_vertically, Direction.back), ValueError),
-        # Move by sign forward/backwards API
-        (partial(st._move_in_direction, Direction.front), StateNotAcquiredError,
-         StepFinished),
-        (partial(st._move_in_direction, Direction.back), StateNotAcquiredError,
-         StepFinished),
-        (partial(st._move_in_direction, Direction.left), ValueError),
-        (partial(st._move_in_direction, Direction.right), ValueError),
-        (partial(st._move_in_direction, Direction.up), ValueError),
-        (partial(st._move_in_direction, Direction.down), ValueError),
-    ]
-    for fn, *error in movement_fns:
-        if len(error) == 1:
-            without_statefile_err = error[0]
-            with_statefile_err = error[0]
+    def test(expected_err):
+        fn = partial(st.__getattribute__(fn_name), *args)
+        if expected_err is None:
+            fn()
         else:
-            without_statefile_err, with_statefile_err = error
-
-        def test(expected_err):
-            if expected_err is None:
+            with pytest.raises(expected_err):
                 fn()
-            else:
-                with pytest.raises(expected_err):
-                    fn()
 
-        # Do test without statefile
-        test(without_statefile_err)
+    # Do test without statefile
+    test(wo_statefile_err)
 
-        # Do test with statefile
-        with st.state:
-            test(with_statefile_err)
+    # Do test with statefile
+    with st.state:
+        test(w_statefile_err)
 
 
 @pytest.mark.parametrize(
@@ -99,13 +92,12 @@ def test_statefile_required():
         ((0, 1, 0), (-1, 1, 0), None),
         ((0, 1, 0), (1, 1, 0), None),
         ((0, 1, 0), (0, 1, -1), None),
+        # Test not next to an adjacent block
+        ((0, 2, 0), (0, 0, 0), None),
+        ((0, -2, 0), (0, 0, 0), None),
+        ((1, 1, 0), (0, 0, 0), None),
         # Test no GPS available
         ((0, 1, 0), None, StateRecoveryError),
-        # Test not next to an adjacent block (these yield OSErrors because
-        # pytest raises OSError when input() is called)
-        ((0, 2, 0), (0, 0, 0), OSError),
-        ((0, -2, 0), (0, 0, 0), OSError),
-        ((1, 1, 0), (0, 0, 0), OSError),
     ])
 )
 def test_gps_recovery(state_pos,
@@ -132,52 +124,100 @@ def test_gps_recovery(state_pos,
 
 
 @pytest.mark.parametrize(
-    argnames=("is_bedrock_blocked", "direction", "expected_error"),
+    argnames=("is_bedrock_blocked", "is_blocked", "direction",
+              "expected_error"),
     argvalues=[
         # Test "happy path"
-        (False, Direction.up, StepFinished),
-        (False, Direction.down, StepFinished),
-        (False, Direction.front, StepFinished),
+        (False, True, Direction.up, StepFinished),
+        (False, True, Direction.down, StepFinished),
+        (False, True, Direction.front, StepFinished),
+        # Test "happy path" but there was empty air to dig
+        (False, False, Direction.up, None),
+        (False, False, Direction.down, None),
+        (False, False, Direction.front, None),
         # Test invalid input
-        (False, Direction.left, ValueError),
-        (False, Direction.right, ValueError),
-        (False, Direction.back, ValueError),
+        (False, True, Direction.left, ValueError),
+        (False, True, Direction.right, ValueError),
+        (False, True, Direction.back, ValueError),
         # Test blocked by bedrock
-        (True, Direction.up, lua_errors.UnbreakableBlockError),
-        (True, Direction.down, lua_errors.UnbreakableBlockError),
-        (True, Direction.front, lua_errors.UnbreakableBlockError)
+        (True, True, Direction.up, lua_errors.UnbreakableBlockError),
+        (True, True, Direction.down, lua_errors.UnbreakableBlockError),
+        (True, True, Direction.front, lua_errors.UnbreakableBlockError)
     ],
 
 )
 def test_dig_towards(is_bedrock_blocked: bool,
+                     is_blocked: bool,
                      direction: Direction,
                      expected_error):
+    """
+
+    :param is_bedrock_blocked: If there's a block to dig, but it's unbreakable
+    :param is_blocked: If there's a block to dig, but it's not unbreakable
+    :param direction: The direciton to dig
+    :param expected_error: The error, if any
+    :return:
+    """
+    if is_bedrock_blocked:
+        assert is_blocked
+
     turtle = StatefulTurtle()
     with mock.patch.object(cc.turtle, "dig") as dig_front, \
             mock.patch.object(cc.turtle, "digUp") as dig_up, \
-            mock.patch.object(cc.turtle, "digDown") as dig_down:
+            mock.patch.object(cc.turtle, "digDown") as dig_down, \
+            mock.patch.object(cc.turtle, "inspect") as inspect_front, \
+            mock.patch.object(cc.turtle, "inspectUp") as inspect_up, \
+            mock.patch.object(cc.turtle, "inspectDown") as inspect_down:
         mapping = {
-            Direction.front: dig_front,
-            Direction.up: dig_up,
-            Direction.down: dig_down
+            Direction.front: (dig_front, inspect_front),
+            Direction.up: (dig_up, inspect_up),
+            Direction.down: (dig_down, inspect_down),
+            Direction.left: (None, None),
+            Direction.right: (None, None),
+            Direction.back: (None, None)
         }
-        if is_bedrock_blocked:
+        dig, inspect = mapping[direction]
+
+        if is_bedrock_blocked and dig is not None:
             msg = lua_errors.TO_LUA[lua_errors.UnbreakableBlockError]
-            mapping[direction].side_effect = LuaException(msg)
+            dig.side_effect = LuaException(msg)
+
+        if inspect is not None:
+            if is_bedrock_blocked or is_blocked:
+                inspect.return_value = cc.MOCK_INSPECT_VAL
+            else:
+                inspect.return_value = None
 
         assert not dig_up.called
         assert not dig_down.called
         assert not dig_front.called
+        assert not inspect_front.called
+        assert not inspect_up.called
+        assert not inspect_down.called
 
-        with pytest.raises(expected_error):
-            turtle.dig_towards(direction)
+        if expected_error:
+            with pytest.raises(expected_error):
+                turtle.dig_in_direction(direction)
+        else:
+            turtle.dig_in_direction(direction)
 
-        # Verify the correct direction was called
-        for key, val in mapping.items():
-            if key is direction:
-                assert val.called
+        # Verify the correct direction was called (and nothing else!)
+        for direction_key, dig_inspect in mapping.items():
+            if dig_inspect == (None, None):
+                continue
+
+            dig, inspect = dig_inspect
+            if direction_key is direction:
+                if is_blocked:
+                    # Dig should only be called if a non-air block was in that
+                    # direction
+                    assert dig.called
+                else:
+                    assert not dig.called
+                assert inspect.called
             else:
-                assert not val.called
+                assert not dig.called
+                assert not inspect.called
 
 
 @pytest.mark.parametrize(
