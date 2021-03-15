@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 class FS:
     def __init__(self):
         self.files = {}
@@ -41,11 +44,14 @@ class FS:
             return self.ReadHandler(file)
 
 
+MOCK_INSPECT_VAL = {
+    b"state": {b"facing": b"south", b"waterlogged": False},
+    b"name": b"boring-mod:boring-block",
+    b"tags": {}}
+
+
 class Turtle:
-    __boring_inspect_val = {
-        b"state": {b"facing": b"south", b"waterlogged": False},
-        b"name": b"boring-mod:boring-block",
-        b"tags": {}}
+    __boring_inspect_val = deepcopy(MOCK_INSPECT_VAL)
     """The value for inspect*() functions. Those functions are to be 
     mocked if any tests are to be done on them. 
     """

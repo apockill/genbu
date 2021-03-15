@@ -53,7 +53,7 @@ class NavigationTurtle(StatefulTurtle):
                 self.forward()
         except lua_errors.TurtleBlockedError as e:
             if destructive:
-                self.dig_towards(e.direction)
+                self.dig_in_direction(e.direction)
             else:
                 raise
 

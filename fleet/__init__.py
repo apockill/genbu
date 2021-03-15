@@ -14,5 +14,6 @@ from .stateful_turtle import (
 )
 from .turtle_astar import astar
 from .navigation_turtle import NavigationTurtle
-from fleet import routines
+from . import block_info
+from . import routines
 from . import math_utils

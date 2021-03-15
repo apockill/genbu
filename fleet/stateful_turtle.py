@@ -1,10 +1,7 @@
-import re
-from typing import Tuple
-from math import cos, sin, radians
-
-import numpy as np
+from typing import Tuple, Optional, Dict
 
 from cc import turtle, os, gps
+
 from fleet import StateFile, StateAttr, Map, math_utils, lua_errors, block_info, \
     Direction
 
@@ -85,6 +82,8 @@ class StatefulTurtle:
                 state.map.write(map)
 
     def run(self):
+        print("Starting main loop!")
+
         # Set up initial state
         turtle.select(1)
 
@@ -123,39 +122,44 @@ class StatefulTurtle:
             self.state.map.write(map)
         raise StepFinished()
 
-    def _move_in_direction(self, direction: Direction):
+    def move_in_direction(self, direction: Direction):
         # TODO: Consider changing from move_sign to Direction enum
         """Move forwards or backwards in the sign of direction"""
-        if direction not in (direction.front, direction.back):
+        valid_directions = (Direction.front, Direction.back,
+                            Direction.up, Direction.down)
+        if direction not in valid_directions:
             raise ValueError(f"Invalid value for direction: {direction}")
 
         map = self.state.map.read()
         old_position = map.position
-        # TODO: Switch to something from math
         new_position = math_utils.coordinate_in_turtle_direction(
             curr_pos=map.position,
             curr_angle=map.direction,
             direction=direction
         )
 
-        with self.state:
+        with self.state as state:
 
             try:
                 if direction is Direction.front:
                     lua_errors.run(turtle.forward)
                 elif direction is Direction.back:
                     lua_errors.run(turtle.back)
+                elif direction is Direction.up:
+                    lua_errors.run(turtle.up)
+                elif direction is direction.down:
+                    direction = Direction.down
+                    lua_errors.run(turtle.down)
             except lua_errors.TurtleBlockedError as e:
                 # TODO: Think of something smart to do when direction isn't
                 #   verified but the turtle is still blocked!
-                # if self.direction_verified:
                 map.add_obstacle(new_position)
-                self.state.map.write(map)
-
+                state.map.write(map)
                 e.direction = direction
                 raise e
 
-            if not self.direction_verified:
+            horizontal_dirs = (Direction.front, Direction.back)
+            if not self.direction_verified and direction in horizontal_dirs:
                 gps_position = gps.locate()
                 # If the move_sign is negative, flip the order of to/from
                 # to represent a move backwards
@@ -169,34 +173,7 @@ class StatefulTurtle:
                 self.direction_verified = True
 
             map.move_to(new_position)
-            self.state.map.write(map)
-        raise StepFinished()
-
-    def _move_vertically(self, direction: Direction):
-        if direction not in (Direction.up, Direction.down):
-            raise ValueError(f"Invalid value for direction: {direction}")
-
-        map = self.state.map.read()
-        new_position = math_utils.coordinate_in_turtle_direction(
-            curr_pos=map.position,
-            curr_angle=map.direction,
-            direction=direction
-        )
-        with self.state:
-            try:
-                if direction is Direction.up:
-                    lua_errors.run(turtle.up)
-                elif direction is direction.down:
-                    direction = Direction.down
-                    lua_errors.run(turtle.down)
-            except lua_errors.TurtleBlockedError as e:
-                map.add_obstacle(new_position)
-                self.state.map.write(map)
-                e.direction = direction
-                raise e
-
-            map.move_to(new_position)
-            self.state.map.write(map)
+            state.map.write(map)
         raise StepFinished()
 
     def dig_towards(self, dir: Direction):
