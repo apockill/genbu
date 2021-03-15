@@ -1,6 +1,7 @@
-import numpy as np
-
 from math import atan2, degrees, cos, sin, radians
+from typing import Sequence
+
+import numpy as np
 
 from fleet.direction import Direction
 
@@ -17,6 +18,12 @@ ANGLES = {
 }
 """Vectors representing the directions a turtle can face to their angle 
 representation"""
+
+
+def get_coordinate_neighbors(pos: Sequence):
+    pos = np.array(pos)
+    return (pos + neighbor
+            for neighbor in NEIGHBOR_COORDS)
 
 
 def get_angle(from_pos: np.ndarray, to_pos: np.ndarray):
@@ -58,17 +65,17 @@ def is_adjacent(pos1: np.ndarray, pos2: np.ndarray):
     return False
 
 
-def distance(pos1: np.ndarray, pos2: np.ndarray):
+def distance(pos1: Sequence, pos2: Sequence):
     """Returns the exact distance between two points"""
-    return np.linalg.norm(pos1 - pos2)
+    return np.linalg.norm(np.array(pos1) - np.array(pos2))
 
 
-def turtle_distance(pos1: np.ndarray, pos2: np.ndarray):
+def turtle_distance(pos1: Sequence, pos2: Sequence):
     """Returns the non-diagonal movement distance for a turtle"""
-    return np.abs(pos1 - pos2).sum()
+    return np.abs(np.array(pos1) - np.array(pos2)).sum()
 
 
-def within_bounding_points(point, bp1, bp2):
+def within_bounding_points(point: Sequence, bp1: Sequence, bp2: Sequence):
     """
     Bounding points are inclusive
     :param bp1: Bounding point 1
