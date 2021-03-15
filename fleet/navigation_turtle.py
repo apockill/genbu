@@ -18,10 +18,13 @@ class NavigationTurtle(StatefulTurtle):
         """Make a move in one of these directions, turning automatically"""
         if isinstance(to_pos, np.ndarray):
             to_pos = to_pos.tolist()
+        elif isinstance(to_pos, tuple):
+            to_pos = list(to_pos)
+        elif not isinstance(to_pos, list):
+            raise ValueError(f"Unsupported type {type(to_pos)} {to_pos}")
 
         ##### Get the next move
-        with self.state as state:
-            map = state.map.read()
+        map = self.state.map.read()
         curr_pos = map.position.tolist()
 
         if curr_pos == to_pos:
