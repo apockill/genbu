@@ -176,38 +176,34 @@ class StatefulTurtle:
             state.map.write(map)
         raise StepFinished()
 
-    def dig_towards(self, dir: Direction):
+    def dig_in_direction(self, direction: Direction):
         """Try digging towards a direction"""
-        actions = {
-            Direction.up: (turtle.inspectUp, turtle.digUp),
-            Direction.down: (turtle.inspectDown, turtle.digDown),
-            Direction.front: (turtle.inspect, turtle.dig)
+        dig_mapping = {
+            Direction.up: turtle.digUp,
+            Direction.down: turtle.digDown,
+            Direction.front: turtle.dig
         }
 
-        if dir not in actions:
-            raise ValueError(f"You can't dig in that direction! {dir}")
-
-        inspect, dig = actions[dir]
+        if direction not in dig_mapping:
+            raise ValueError(f"You can't dig in that direction! {direction}")
 
         # Inspect the block about to be dug to verify it's not blacklisted
-        inspected_block_info = inspect()
+        inspected_block_info = self.inspect_in_direction(direction)
         if inspected_block_info is None:
             # Nothing to dig!
             print("Digging towards empty air!")
             return
-        inspected_block_name = inspected_block_info[b"name"].decode("utf-8")
 
-        blacklisted_regex = '(?:% s)' % '|'.join(block_info.do_not_mine)
-        if re.match(blacklisted_regex, inspected_block_name):
-            msg = ("Tried to mine blacklisted block: "
-                   f"{inspected_block_name}")
+        block_name = inspected_block_info[b"name"].decode("utf-8")
+        if block_info.name_matches_regexes(block_name, block_info.do_not_mine):
+            msg = f"Tried to mine blacklisted block: {block_name}"
             raise MinedBlacklistedBlockError(msg)
 
         # Actually dig the block
         try:
-            lua_errors.run(dig)
+            lua_errors.run(dig_mapping[direction])
         except lua_errors.UnbreakableBlockError as e:
-            e.direction = dir
+            e.direction = direction
             raise e
 
         # Since the block was successfully removed, remove it as a potential
@@ -217,33 +213,47 @@ class StatefulTurtle:
             obstacle_position = math_utils.coordinate_in_turtle_direction(
                 curr_pos=map.position,
                 curr_angle=map.direction,
-                direction=dir
+                direction=direction
             )
             map.remove_obstacle(obstacle_position)
             state.map.write(map)
-        # TODO: Have the turtle remove the known obstacle in this direction
+
         raise StepFinished()
 
+    def inspect_in_direction(self, direction: Direction) \
+            -> Optional[Dict[bytes, bytes]]:
+        inspect_mapping = {
+            Direction.up: turtle.inspectUp,
+            Direction.down: turtle.inspectDown,
+            Direction.front: turtle.inspect
+        }
+
+        if direction not in inspect_mapping:
+            msg = f"You can't inspect in that direction! {direction}"
+            raise ValueError(msg)
+
+        return lua_errors.run(inspect_mapping[direction])
+
     def dig_up(self):
-        self.dig_towards(Direction.up)
+        self.dig_in_direction(Direction.up)
 
     def dig_down(self):
-        self.dig_towards(Direction.down)
+        self.dig_in_direction(Direction.down)
 
     def dig_front(self):
-        self.dig_towards(Direction.front)
+        self.dig_in_direction(Direction.front)
 
     def up(self):
-        self._move_vertically(Direction.up)
+        self.move_in_direction(Direction.up)
 
     def down(self):
-        self._move_vertically(Direction.down)
+        self.move_in_direction(Direction.down)
 
     def forward(self):
-        self._move_in_direction(Direction.front)
+        self.move_in_direction(Direction.front)
 
     def backward(self):
-        self._move_in_direction(Direction.back)
+        self.move_in_direction(Direction.back)
 
     def turn_right(self):
         self.turn_degrees(90)
