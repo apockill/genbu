@@ -234,6 +234,19 @@ class StatefulTurtle:
 
         return lua_errors.run(inspect_mapping[direction])
 
+    def place_in_direction(self, direction: Direction):
+        place_mapping = {
+            Direction.up: turtle.placeUp,
+            Direction.down: turtle.placeDown,
+            Direction.front: turtle.place
+        }
+        if direction not in place_mapping:
+            msg = f"You can't place in that direction! {direction}"
+            raise ValueError(msg)
+
+        lua_errors.run(turtle.placeDown)
+        raise StepFinished()
+
     def dig_up(self):
         self.dig_in_direction(Direction.up)
 
