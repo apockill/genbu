@@ -23,7 +23,7 @@ class QuarryTurtle(NavigationTurtle):
             initial_loc = self.state.map.read().position
         self.state.fuel_loc = PromptStateAttr(
             self.state, "fuel_loc",
-            parser=user_input.parse_position(3),
+            parser=user_input.parse_ndarray(3),
             default=initial_loc)
 
         with self.state:
@@ -31,15 +31,15 @@ class QuarryTurtle(NavigationTurtle):
 
         self.state.dump_loc = PromptStateAttr(
             self.state, "dump_loc",
-            parser=user_input.parse_position(3),
+            parser=user_input.parse_ndarray(3),
             default=np.array([hx + 2, hy, hz]))
         self.state.mining_x1z1 = PromptStateAttr(
             self.state, "mining_x1z1",
-            parser=user_input.parse_position(2),
+            parser=user_input.parse_ndarray(2),
             default=np.array((hx + 10, hz)))
         self.state.mining_x2z2 = PromptStateAttr(
             self.state, "mining_x2z2",
-            parser=user_input.parse_position(2),
+            parser=user_input.parse_ndarray(2),
             default=np.array((hx + 110, hz + 100)))
         self.state.dig_height = PromptStateAttr(
             self.state, "dig_height",
