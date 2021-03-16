@@ -42,6 +42,15 @@ class TreeFarmBot(NavigationTurtle):
             self.state, "fuel_loc",
             parser=user_input.parse_ndarray(3),
             default=initial_loc)
+        self.state.sapling_loc = PromptStateAttr(
+            self.state, "sapling_loc",
+            parser=user_input.parse_ndarray(3),
+            default=initial_loc)
+        self.state.dirt_loc = PromptStateAttr(
+            self.state, "dirt_loc",
+            parser=user_input.parse_ndarray(3),
+            default=initial_loc)
+
         self.state.farm_x1z1 = PromptStateAttr(
             self.state, "farm_x1z1",
             parser=user_input.parse_ndarray(2),
@@ -117,14 +126,13 @@ class TreeFarmBot(NavigationTurtle):
         if dirt_location not in placed_dirt_locations:
             self.move_toward(dirt_location)
             try:
-                turtle.select(self.DIRT_SLOT)
+                self.select(self.DIRT_SLOT)
                 self.place_in_direction(Direction.down)
             except lua_errors.BlockNotPlaceableError:
                 placed_dirt_locations.append(dirt_location)
                 with state:
                     state.placed_dirt.write(placed_dirt_locations)
-            finally:
-                turtle.select(routines.FUEL_SLOT)
+
         # Then, place the sapling, if necessary
         sapling_location = [dirt_location[0],
                             dirt_location[1] + 1,
@@ -132,14 +140,12 @@ class TreeFarmBot(NavigationTurtle):
         if sapling_location not in placed_sapling_locations:
             self.move_toward(sapling_location)
             try:
-                turtle.select(self.SAPLING_SLOT)
+                self.select(self.SAPLING_SLOT)
                 self.place_in_direction(Direction.down)
             except lua_errors.BlockNotPlaceableError:
                 placed_sapling_locations.append(sapling_location)
                 with state:
                     state.placed_saplings.write(placed_sapling_locations)
-            finally:
-                turtle.select(routines.FUEL_SLOT)
 
     def get_tree_planting_locations(self, state):
         """Generates a list of locations where trees should be planted"""
