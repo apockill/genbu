@@ -79,10 +79,10 @@ class QuarryTurtle(NavigationTurtle):
         curr_pos = state.map.read().position
 
         next_column = self.get_next_column(
-            x1z1=mining_x1z1,
-            x2z2=mining_x2z2,
-            home_pos=fuel_loc,
-            finished_columns=columns_finished
+            x1z1=tuple(mining_x1z1.tolist()),
+            x2z2=tuple(mining_x2z2.tolist()),
+            home_pos=tuple(fuel_loc.tolist()),
+            finished_columns=tuple(tuple(c) for c in columns_finished)
         )
 
         if next_column is None:
@@ -129,21 +129,25 @@ class QuarryTurtle(NavigationTurtle):
         except lua_errors.UnbreakableBlockError:
             mark_column_finished()
 
-    def get_next_column(self, home_pos, x1z1, x2z2, finished_columns):
+    @staticmethod
+    @lru_cache
+    def get_next_column(home_pos, x1z1, x2z2, finished_columns) \
+            -> Optional[List[int]]:
         """Return the next column. They are sorted by distance from home"""
         from_x, to_x = sorted([x1z1[0], x2z2[0]])
         from_z, to_z = sorted([x1z1[1], x2z2[1]])
 
-        hx, _, hz = home_pos
-        columns = [[x, z]
+        columns = [(x, z)
                    for x in range(from_x, to_x + 1)
                    for z in range(from_z, to_z + 1)
-                   if [x, z] not in finished_columns]
+                   if (x, z) not in finished_columns]
         if not len(columns):
             return None
 
+        hx, _, hz = home_pos
         columns.sort(
             key=lambda c: (hx - c[0]) ** 2 + (hz - c[1]) ** 2)
-        return columns[0]
+        return list(columns[0])
+
 
 QuarryTurtle().run()
