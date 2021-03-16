@@ -56,6 +56,20 @@ class Turtle:
     mocked if any tests are to be done on them. 
     """
 
+    def refuel(self, amount):
+        assert amount > 0
+
+    def getItemCount(self, slot_id):
+        assert 0 < slot_id < 17
+        return 0
+
+    def getItemDetail(self, slot_id):
+        assert 0 < slot_id < 17
+        return None
+
+    def select(self, slot_id):
+        assert 0 < slot_id < 17
+
     def digUp(self):
         pass
 

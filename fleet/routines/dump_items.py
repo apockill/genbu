@@ -1,6 +1,6 @@
 from cc import turtle
 
-from fleet.navigation_turtle import NavigationTurtle
+from fleet.navigation_turtle import NavigationTurtle, Direction
 
 
 def dump_if_full(nav_turtle: NavigationTurtle, dump_spot, dump_slots):
@@ -14,6 +14,5 @@ def dump_if_full(nav_turtle: NavigationTurtle, dump_spot, dump_slots):
         nav_turtle.move_toward(to_pos=dump_spot)
         for slot_id in dump_slots:
             item_count = turtle.getItemCount(slot_id)
-            turtle.select(slot_id)
-            turtle.dropDown(item_count)
-        turtle.select(1)
+            nav_turtle.select(slot_id)
+            nav_turtle.drop_in_direction(Direction.down, item_count)

@@ -1,4 +1,5 @@
 from .direction import Direction
+from .inventory import Inventory, InventorySlot
 from .state_file import (
     StateAttr,
     StateFile,
