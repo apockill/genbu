@@ -1,8 +1,6 @@
 from typing import List
 from functools import partial
 
-from cc import turtle
-
 import numpy as np
 
 from fleet import (
