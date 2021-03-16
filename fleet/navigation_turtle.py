@@ -5,6 +5,7 @@ import numpy as np
 from fleet import (
     astar,
     StatefulTurtle,
+    Direction,
     lua_errors)
 from fleet.math_utils import sign, angle_between
 
@@ -48,12 +49,12 @@ class NavigationTurtle(StatefulTurtle):
 
         try:
             if dist[1] > 0:
-                self.up()
+                self.move_in_direction(Direction.up)
             elif dist[1] < 0:
-                self.down()
+                self.move_in_direction(Direction.down)
             elif dist[0] != 0 or dist[2] != 0:
                 self.turn_toward(next_pos)
-                self.forward()
+                self.move_in_direction(Direction.front)
         except lua_errors.TurtleBlockedError as e:
             if destructive:
                 self.dig_in_direction(e.direction)

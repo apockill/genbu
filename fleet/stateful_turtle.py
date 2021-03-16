@@ -148,7 +148,6 @@ class StatefulTurtle:
                 elif direction is Direction.up:
                     lua_errors.run(turtle.up)
                 elif direction is direction.down:
-                    direction = Direction.down
                     lua_errors.run(turtle.down)
             except lua_errors.TurtleBlockedError as e:
                 # TODO: Think of something smart to do when direction isn't
@@ -246,27 +245,6 @@ class StatefulTurtle:
 
         lua_errors.run(turtle.placeDown)
         raise StepFinished()
-
-    def dig_up(self):
-        self.dig_in_direction(Direction.up)
-
-    def dig_down(self):
-        self.dig_in_direction(Direction.down)
-
-    def dig_front(self):
-        self.dig_in_direction(Direction.front)
-
-    def up(self):
-        self.move_in_direction(Direction.up)
-
-    def down(self):
-        self.move_in_direction(Direction.down)
-
-    def forward(self):
-        self.move_in_direction(Direction.front)
-
-    def backward(self):
-        self.move_in_direction(Direction.back)
 
     def turn_right(self):
         self.turn_degrees(90)
