@@ -12,7 +12,7 @@ class TurtleAstar(AStar):
         """
         :param obstacles: A numpy array of obstacles. Obtained by map.obstacles
         :param e_admissibility: A multiplier to significantly speed up A*.
-        A value of '1' guarrentees the most optimal path, but has compute
+        A value of '1' guarantees the most optimal path, but has compute
         implications. The larger the number, the more 'admissible' the path may
         be to detours.
         :param obstacle_cost: Think of this as "how many blocks would I rather
