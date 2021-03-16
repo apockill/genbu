@@ -22,12 +22,8 @@ from fleet import (
     argnames=("fn_name", "args", "wo_statefile_err", "w_statefile_err"),
     argvalues=[
         # Simple turns
-        ("up", (), StateNotAcquiredError, StepFinished),
-        ("down", (), StateNotAcquiredError, StepFinished),
         ("turn_left", (), StateNotAcquiredError, StepFinished),
         ("turn_right", (), StateNotAcquiredError, StepFinished),
-        ("forward", (), StateNotAcquiredError, StepFinished),
-        ("backward", (), StateNotAcquiredError, StepFinished),
         # Digging mechanics
         ("dig_in_direction", (Direction.up,), StepFinished, StepFinished),
         ("dig_in_direction", (Direction.down,), StepFinished, StepFinished),
@@ -221,7 +217,7 @@ def test_dig_towards(is_bedrock_blocked: bool,
 
 
 @pytest.mark.parametrize(
-    argnames=("dig_fn", "block_name", "is_mineable", "turtle_inspect_fn"),
+    argnames=("dig_direction", "block_name", "is_mineable", "turtle_inspect_fn"),
     argvalues=[
         # Test "happy path"
         (dig_fn, block_name, is_mineable, turtle_inspect_fn)
@@ -233,14 +229,14 @@ def test_dig_towards(is_bedrock_blocked: bool,
             ("chest:oh-no-dont-mine-me", False),
         ]
         for dig_fn, turtle_inspect_fn in [
-            ("dig_up", "inspectUp"),
-            ("dig_down", "inspectDown"),
-            ("dig_front", "inspect")
+            (Direction.up, "inspectUp"),
+            (Direction.down, "inspectDown"),
+            (Direction.front, "inspect")
         ]
     ],
 
 )
-def test_dig_towards_blacklisted_block(dig_fn: str,
+def test_dig_towards_blacklisted_block(dig_direction: str,
                                        turtle_inspect_fn,
                                        block_name: str,
                                        is_mineable: bool):
@@ -257,7 +253,7 @@ def test_dig_towards_blacklisted_block(dig_fn: str,
         inspect_front.return_value = inspect_retval
         # TODO: Make a good exception for this
         with pytest.raises(expected_exception):
-            turtle.__getattribute__(dig_fn)()
+            turtle.dig_in_direction(dig_direction)
 
 
 @pytest.mark.parametrize(
@@ -265,25 +261,25 @@ def test_dig_towards_blacklisted_block(dig_fn: str,
               "pre_move_dir", "post_move_dir"),
     argvalues=[
         # Happy path, where expected matches what was discovered
-        ("forward", False, (1, 1, 1), (2, 1, 1), 0, 0),
-        ("backward", False, (-1, -1, -1), (0, -1, -1), 180, 180),
-        ("backward", False, (1, 2, 3), (1, 2, 2), 90, 90),
+        (Direction.front, False, (1, 1, 1), (2, 1, 1), 0, 0),
+        (Direction.back, False, (-1, -1, -1), (0, -1, -1), 180, 180),
+        (Direction.back, False, (1, 2, 3), (1, 2, 2), 90, 90),
         # Test the state direction was overwritten if it was incorrect
         # We do a bunch of test cases here mostly just to make sure the angle
         # calculations work, and that the forward/backwards calculation is also
         # done correctly
-        ("forward", False, (1, 2, 3), (2, 2, 3), 90, 0),
-        ("backward", False, (0, 0, 0), (1, 0, 0), 90, 180),
-        ("forward", False, (0, 0, 0), (0, 0, 1), 180, 90),
-        ("backward", False, (0, 0, 0), (0, 0, 1), 90, 270),
-        ("forward", False, (0, 0, 0), (0, 0, -1), 90, 270),
-        ("backward", False, (0, 0, 0), (0, 0, -1), 270, 90),
-        ("forward", False, (0, 0, 0), (-1, 0, 0), 90, 180),
-        ("backward", False, (0, 0, 0), (-1, 0, 0), 90, 0),
+        (Direction.front, False, (1, 2, 3), (2, 2, 3), 90, 0),
+        (Direction.back, False, (0, 0, 0), (1, 0, 0), 90, 180),
+        (Direction.front, False, (0, 0, 0), (0, 0, 1), 180, 90),
+        (Direction.back, False, (0, 0, 0), (0, 0, 1), 90, 270),
+        (Direction.front, False, (0, 0, 0), (0, 0, -1), 90, 270),
+        (Direction.back, False, (0, 0, 0), (0, 0, -1), 270, 90),
+        (Direction.front, False, (0, 0, 0), (-1, 0, 0), 90, 180),
+        (Direction.back, False, (0, 0, 0), (-1, 0, 0), 90, 0),
         ###### Test forward-position finding routine
         # In this case the robot moves backwards instead of forward, because
         # forward was blocked
-        ("forward", True, (0, 0, 0), (-1, 0, 0), 0, 0),
+        (Direction.front, True, (0, 0, 0), (-1, 0, 0), 0, 0),
     ]
 )
 def test_dir_uncorrupted_on_move_forward_or_backward(
@@ -336,7 +332,7 @@ def test_dir_uncorrupted_on_move_forward_or_backward(
                 turtle_backward.side_effect = LuaException(msg)
             gps_locate.return_value = to_gps_pos
             with pytest.raises(expected_err):
-                turtle.__getattribute__(mv_direction)()
+                turtle.move_in_direction(mv_direction)
 
         assert turtle.state.map.read().direction == post_move_dir
         if not is_blocked:
