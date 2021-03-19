@@ -40,13 +40,19 @@ class BlockNotPlaceableError(LuaException):
     """This can occur if the space is already taken by another block"""
 
 
+class NoItemsToPlace(LuaException):
+    """Occurs if the turtle is trying to place an item but there's nothing on
+    the slot that is selected"""
+
+
 FROM_LUA: Dict[str, Any] = {
     "Movement obstructed": TurtleBlockedError,
     "Unbreakable block detected": UnbreakableBlockError,
     "Out of fuel": OutOfFuelError,
     "Items not combustible": ItemNotCombustibleError,
     "No items to combust": NoItemsToCombustError,
-    "Cannot place block here": BlockNotPlaceableError
+    "Cannot place block here": BlockNotPlaceableError,
+    "No items to place": NoItemsToPlace
 }
 """Map LuaErrors to this libraries errors. These are mapped based on the 
 messages in the LuaError, hence the key to the dict is a string representing 
