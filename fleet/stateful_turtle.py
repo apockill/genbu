@@ -3,7 +3,7 @@ from typing import Tuple, Optional, Dict
 from cc import turtle, os, gps
 
 from fleet import StateFile, StateAttr, Map, math_utils, lua_errors, block_info, \
-    Direction
+    Direction, Inventory
 
 
 class StepFinished(Exception):
@@ -68,6 +68,10 @@ class StatefulTurtle:
         pointing. It uses GPS to verify two points before and after a move to 
         do this. """
 
+        self.inventory = Inventory.from_turtle(selected_slot=1)
+        """This will scan the entire inventory and record the contents, and 
+        leave the turtle with selected_slot selected"""
+
         self._maybe_recover_location(gps_loc)
 
     def _maybe_recover_location(self, gps_loc: Tuple[int, int, int]):
@@ -83,9 +87,6 @@ class StatefulTurtle:
 
     def run(self):
         print("Starting main loop!")
-
-        # Set up initial state
-        turtle.select(1)
 
         while True:
             # Let other turtles have a chance
@@ -120,15 +121,18 @@ class StatefulTurtle:
             elif degrees == -90:
                 turtle.turnLeft()
             self.state.map.write(map)
-        raise StepFinished()
+        raise StepFinished
 
     def move_in_direction(self, direction: Direction):
-        # TODO: Consider changing from move_sign to Direction enum
         """Move forwards or backwards in the sign of direction"""
-        valid_directions = (Direction.front, Direction.back,
-                            Direction.up, Direction.down)
-        if direction not in valid_directions:
-            raise ValueError(f"Invalid value for direction: {direction}")
+        direction_mapping = {
+            Direction.front: turtle.forward,
+            Direction.back: turtle.back,
+            Direction.up: turtle.up,
+            Direction.down: turtle.down,
+        }
+        if direction not in direction_mapping:
+            raise ValueError(f"You can't move in the direction: {direction}")
 
         map = self.state.map.read()
         old_position = map.position
@@ -141,14 +145,7 @@ class StatefulTurtle:
         with self.state as state:
 
             try:
-                if direction is Direction.front:
-                    lua_errors.run(turtle.forward)
-                elif direction is Direction.back:
-                    lua_errors.run(turtle.back)
-                elif direction is Direction.up:
-                    lua_errors.run(turtle.up)
-                elif direction is direction.down:
-                    lua_errors.run(turtle.down)
+                lua_errors.run(direction_mapping[direction])
             except lua_errors.TurtleBlockedError as e:
                 # TODO: Think of something smart to do when direction isn't
                 #   verified but the turtle is still blocked!
@@ -173,7 +170,7 @@ class StatefulTurtle:
 
             map.move_to(new_position)
             state.map.write(map)
-        raise StepFinished()
+        raise StepFinished
 
     def dig_in_direction(self, direction: Direction):
         """Try digging towards a direction"""
@@ -184,7 +181,7 @@ class StatefulTurtle:
         }
 
         if direction not in dig_mapping:
-            raise ValueError(f"You can't dig in that direction! {direction}")
+            raise ValueError(f"You can't dig in the direction: {direction}")
 
         # Inspect the block about to be dug to verify it's not blacklisted
         inspected_block_info = self.inspect_in_direction(direction)
@@ -205,6 +202,10 @@ class StatefulTurtle:
             e.direction = direction
             raise e
 
+        # Mark all slots as unconfirmed, since we don't know where that material
+        # moved to
+        self.inventory.mark_all_slots_unconfirmed()
+
         # Since the block was successfully removed, remove it as a potential
         # obstacle in the map.
         with self.state as state:
@@ -217,7 +218,7 @@ class StatefulTurtle:
             map.remove_obstacle(obstacle_position)
             state.map.write(map)
 
-        raise StepFinished()
+        raise StepFinished
 
     def inspect_in_direction(self, direction: Direction) \
             -> Optional[Dict[bytes, bytes]]:
@@ -228,10 +229,42 @@ class StatefulTurtle:
         }
 
         if direction not in inspect_mapping:
-            msg = f"You can't inspect in that direction! {direction}"
-            raise ValueError(msg)
+            raise ValueError(f"You can't inspect in the direction: {direction}")
 
         return lua_errors.run(inspect_mapping[direction])
+
+    def suck_in_direction(self, direction: Direction, amount=None, refresh=True):
+        suck_mapping = {
+            Direction.up: turtle.suckUp,
+            Direction.down: turtle.suckDown,
+            Direction.front: turtle.suck
+        }
+
+        if direction not in suck_mapping:
+            raise ValueError(f"You can't suck in the direction: {direction}")
+
+        lua_errors.run(suck_mapping[direction], amount)
+
+        # Mark all slots as unconfirmed, since we don't know where that material
+        # moved to
+        self.inventory.mark_all_slots_unconfirmed()
+
+    def drop_in_direction(self, direction: Direction, amount=None):
+        drop_mapping = {
+            Direction.up: turtle.dropUp,
+            Direction.down: turtle.dropDown,
+            Direction.front: turtle.drop
+        }
+
+        if direction not in drop_mapping:
+            raise ValueError(f"You can't drop in the direction: {direction}")
+
+        lua_errors.run(drop_mapping[direction], amount)
+
+        # Now that items have been potentially dropped, update the inventory:
+        self.inventory.selected.refresh()
+
+        raise StepFinished
 
     def place_in_direction(self, direction: Direction):
         place_mapping = {
@@ -240,14 +273,24 @@ class StatefulTurtle:
             Direction.front: turtle.place
         }
         if direction not in place_mapping:
-            msg = f"You can't place in that direction! {direction}"
-            raise ValueError(msg)
+            raise ValueError(f"You can't place in the direction: {direction}")
 
-        lua_errors.run(turtle.placeDown)
-        raise StepFinished()
+        lua_errors.run(place_mapping[direction])
+
+        # Track the change in inventory, since no errors occurred
+        self.inventory.selected.refresh()
+        raise StepFinished
 
     def turn_right(self):
         self.turn_degrees(90)
 
     def turn_left(self):
         self.turn_degrees(-90)
+
+    def select(self, slot_id):
+        lua_errors.run(turtle.select, slot_id)
+        self.inventory.selected_id = slot_id
+
+    def refuel(self, fuel_amount):
+        lua_errors.run(turtle.refuel, fuel_amount)
+        self.inventory.selected.refresh()
