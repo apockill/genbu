@@ -1,4 +1,5 @@
-from computercraft.errors import LuaException
+from cc import turtle
+
 from fleet import NavigationTurtle, Direction
 
 FUEL_SLOT = 1
@@ -13,7 +14,7 @@ def maybe_refuel(nav_turtle: NavigationTurtle, refuel_spot):
         # want to do so from the fuel slot
         nav_turtle.select(FUEL_SLOT)
 
-        if nav_turtle.inventory.selected_slot.count > 1:
+        if nav_turtle.inventory.selected.count > 1:
             nav_turtle.refuel(1)
 
         # Go grab fuel
