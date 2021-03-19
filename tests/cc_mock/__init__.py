@@ -70,6 +70,33 @@ class Turtle:
     def select(self, slot_id):
         assert 0 < slot_id < 17
 
+    def place(self):
+        pass
+
+    def placeUp(self):
+        pass
+
+    def placeDown(self):
+        pass
+
+    def suck(self, amount):
+        assert amount > 0
+
+    def suckUp(self, amount):
+        assert amount > 0
+
+    def suckDown(self, amount):
+        assert amount > 0
+
+    def drop(self, amount):
+        assert amount > 0
+
+    def dropUp(self, amount):
+        assert amount > 0
+
+    def dropDown(self, amount):
+        assert amount > 0
+
     def digUp(self):
         pass
 
