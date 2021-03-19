@@ -302,7 +302,6 @@ def test_dir_uncorrupted_on_move_forward_or_backward(
         state = StatefulTurtle().state
         with state:
             map = state.map.read()
-            print("MAP", map)
             map.direction = pre_move_dir
             state.map.write(map)
         del state

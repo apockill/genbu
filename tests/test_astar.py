@@ -134,8 +134,6 @@ def test_obstacle_cost(
     assert path_obstructed == obstructed
     assert expected_n_moves == len(path)
 
-    print(path)
-
 
 def generate_obstacle_block(center, radius):
     """Generates a block of obstacles surrounding a center, optionally
