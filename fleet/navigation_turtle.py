@@ -71,7 +71,10 @@ class NavigationTurtle(StatefulTurtle):
 
         unit_vector = [sign(x_dist), 0, sign(z_dist)]
         turn_angle = angle_between(np.array([0, 0, 0]), unit_vector)
-        turn_direction = sign(turn_angle % 360 - map.direction)
+        turn_direction = turn_angle - map.direction
+
+        if abs(turn_direction) >= 270:
+            turn_direction = turn_direction % 360
 
         if turn_direction != 0:
             if turn_direction > 0:
