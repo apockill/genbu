@@ -21,6 +21,17 @@ class MinedBlacklistedBlockError(Exception):
     """
 
 
+def ends_step(fn):
+    def wrapper(*args, end_step=True, **kwargs):
+        result = fn(*args, **kwargs)
+        assert result is None, \
+            "This wrapper should not be used on functions that return values!"
+        if end_step:
+            raise StepFinished
+
+    return wrapper
+
+
 class StatefulTurtle:
     """Defines a way of working with turtles where every move is tracked,
     so that the program could crash at any moment and be brought back.
@@ -104,6 +115,7 @@ class StatefulTurtle:
         subclass."""
         raise NotImplementedError()
 
+    @ends_step
     def turn_degrees(self, degrees: int):
         """Turn `degrees` amount. The direction is determined by the sign.
         Only 90, 0, or -90 is allowed. 0 performs nothing
@@ -121,8 +133,8 @@ class StatefulTurtle:
             elif degrees == -90:
                 turtle.turnLeft()
             self.state.map.write(map)
-        raise StepFinished
 
+    @ends_step
     def move_in_direction(self, direction: Direction):
         """Move forwards or backwards in the sign of direction"""
         direction_mapping = {
@@ -170,8 +182,8 @@ class StatefulTurtle:
 
             map.move_to(new_position)
             state.map.write(map)
-        raise StepFinished
 
+    @ends_step
     def dig_in_direction(self, direction: Direction):
         """Try digging towards a direction"""
         dig_mapping = {
@@ -218,8 +230,6 @@ class StatefulTurtle:
             map.remove_obstacle(obstacle_position)
             state.map.write(map)
 
-        raise StepFinished
-
     def inspect_in_direction(self, direction: Direction) \
             -> Optional[Dict[bytes, bytes]]:
         inspect_mapping = {
@@ -233,7 +243,8 @@ class StatefulTurtle:
 
         return lua_errors.run(inspect_mapping[direction])
 
-    def suck_in_direction(self, direction: Direction, amount=None, refresh=True):
+    @ends_step
+    def suck_in_direction(self, direction: Direction, amount=None):
         suck_mapping = {
             Direction.up: turtle.suckUp,
             Direction.down: turtle.suckDown,
@@ -243,12 +254,13 @@ class StatefulTurtle:
         if direction not in suck_mapping:
             raise ValueError(f"You can't suck in the direction: {direction}")
 
-        lua_errors.run(suck_mapping[direction], amount)
+        lua_errors.run(suck_mapping[direction], amount=amount)
 
         # Mark all slots as unconfirmed, since we don't know where that material
         # moved to
         self.inventory.mark_all_slots_unconfirmed()
 
+    @ends_step
     def drop_in_direction(self, direction: Direction, amount=None):
         drop_mapping = {
             Direction.up: turtle.dropUp,
@@ -264,8 +276,7 @@ class StatefulTurtle:
         # Now that items have been potentially dropped, update the inventory:
         self.inventory.selected.refresh()
 
-        raise StepFinished
-
+    @ends_step
     def place_in_direction(self, direction: Direction):
         place_mapping = {
             Direction.up: turtle.placeUp,
@@ -279,7 +290,6 @@ class StatefulTurtle:
 
         # Track the change in inventory, since no errors occurred
         self.inventory.selected.refresh()
-        raise StepFinished
 
     def turn_right(self):
         self.turn_degrees(90)
