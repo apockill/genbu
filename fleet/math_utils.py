@@ -10,7 +10,7 @@ NEIGHBOR_COORDS = np.array(
      [0, 0, -1]])
 """All possible directions a turtle could go relative to a block"""
 
-ANGLES = {
+VECTOR_TO_ANGLE = {
     (1, 0): 0,
     (0, 1): 90,
     (-1, 0): 180,
@@ -33,7 +33,7 @@ def get_angle(from_pos: np.ndarray, to_pos: np.ndarray):
     """
     x, _, z = to_pos - from_pos
     diff = (x, z)
-    return ANGLES[diff]
+    return VECTOR_TO_ANGLE[diff]
 
 
 def sign(num):
