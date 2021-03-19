@@ -1,7 +1,10 @@
 from typing import List
 from functools import partial
+from time import time
+from functools import lru_cache
 
 import numpy as np
+from cc import os
 
 from fleet import (
     NavigationTurtle,
@@ -48,6 +51,10 @@ class TreeFarmBot(NavigationTurtle):
             self.state, "dirt_loc",
             parser=user_input.parse_ndarray(3),
             default=initial_loc)
+        self.state.dump_loc = PromptStateAttr(
+            self.state, "dump_loc",
+            parser=user_input.parse_ndarray(3),
+            default=initial_loc)
 
         self.state.farm_x1z1 = PromptStateAttr(
             self.state, "farm_x1z1",
@@ -65,11 +72,14 @@ class TreeFarmBot(NavigationTurtle):
             self.state, "space_between_trees",
             parser=int,
             default=2)
-        # TODO: add support for tree_width
         self.state.tree_width = PromptStateAttr(
             self.state, "tree_width",
             parser=int,
             default=1)
+        self.state.check_every_n_seconds = PromptStateAttr(
+            self.state, "check_every_n_seconds",
+            parser=int,
+            default=60 * 5)
 
         # Create other state
         self.state.placed_dirt = StateAttr(
@@ -81,9 +91,15 @@ class TreeFarmBot(NavigationTurtle):
         self.state.tree_nodes = StateAttr(
             self.state, "tree_nodes",
             default=[])
+        self.state.last_checkup = StateAttr(
+            self.state, "last_checkup",
+            default=time())
 
     def step(self, state: StateFile):
-        routines.maybe_refuel(self, state.fuel_loc.read())
+        fuel_loc = state.fuel_loc.read()
+        dump_loc = state.dump_loc.read()
+        last_checkup_time = state.last_checkup.read()
+        check_every_n_seconds = state.check_every_n_seconds.read()
 
         # TODO: ensure inventory
 
