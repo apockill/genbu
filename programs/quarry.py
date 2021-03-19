@@ -119,7 +119,7 @@ class QuarryTurtle(NavigationTurtle):
             state.columns_finished.write(columns_finished)
             raise StepFinished()
 
-        if curr_y <= state.dig_depth.read():
+        if curr_pos[1] <= dig_depth:
             mark_column_finished()
 
         try:
