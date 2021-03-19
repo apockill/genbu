@@ -77,18 +77,23 @@ def turtle_distance(pos1: Sequence, pos2: Sequence):
 
 def within_bounding_points(point: Sequence, bp1: Sequence, bp2: Sequence):
     """
-    Bounding points are inclusive
+    Bounding points are inclusive. This supports either (a, b) or (a, b, c)
+    formatted points.
     :param bp1: Bounding point 1
     :param bp2: Bounding point 2
     :param point: Point to test
     :return:
     """
+    assert len(point) == len(bp1) and len(bp2)
     min_x, max_x = sorted([bp1[0], bp2[0]])
     min_y, max_y = sorted([bp1[1], bp2[1]])
+
+    within_xy = min_x <= point[0] <= max_x and min_y <= point[1] <= max_y
+    if len(point) == 2:
+        return within_xy
+
     min_z, max_z = sorted([bp1[2], bp2[2]])
-    return (min_x <= point[0] <= max_x
-            and min_y <= point[1] <= max_y
-            and min_z <= point[2] <= max_z)
+    return within_xy and min_z <= point[2] <= max_z
 
 
 def coordinate_in_turtle_direction(curr_pos: np.ndarray,

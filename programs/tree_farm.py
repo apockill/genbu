@@ -161,7 +161,23 @@ class TreeFarmBot(NavigationTurtle):
                 with state:
                     state.placed_saplings.write(placed_sapling_locations)
 
-    def get_tree_planting_locations(self, state):
+    def maybe_place_item(self, state: StateFile,
+                         slot: int,
+                         item_location: List[int],
+                         placed_locations: List[List[int]],
+                         state_var):
+        if item_location not in placed_locations:
+            self.move_toward(item_location, destructive=self.destructive)
+            self.select(slot)
+            self.dig_in_direction(Direction.down, end_step=False)
+            self.place_in_direction(Direction.down, end_step=False)
+            placed_locations.append(item_location)
+            with state:
+                state_var.write(placed_locations)
+
+    @property
+    @lru_cache
+    def tree_planting_locations(self):
         """Generates a list of locations where trees should be planted"""
         x1z1 = state.farm_x1z1.read()
         x2z2 = state.farm_x2z2.read()
@@ -172,7 +188,7 @@ class TreeFarmBot(NavigationTurtle):
         from_x, to_x = sorted([x1z1[0], x2z2[0]])
         from_z, to_z = sorted([x1z1[1], x2z2[1]])
 
-        return (
+        return list(
             [x + offset_x, height, z + offset_z]
             for x in
             range(from_x + spacing, to_x + 1 - spacing,
