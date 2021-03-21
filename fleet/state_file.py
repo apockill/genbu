@@ -40,6 +40,7 @@ class StateAttr:
             value = type(self.default).from_dict(value)
         elif isinstance(self.default, np.ndarray):
             value = np.array(value)
+
         return value
 
     def write(self, value):
@@ -52,6 +53,7 @@ class StateAttr:
             value = value.tolist()
         elif isinstance(value, BaseSerializable):
             value = value.to_dict()
+
         self.state_file.dict[self.key_name] = value
 
 
