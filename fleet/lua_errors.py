@@ -40,9 +40,13 @@ class BlockNotPlaceableError(LuaException):
     """This can occur if the space is already taken by another block"""
 
 
-class NoItemsToPlace(LuaException):
+class NoItemsToPlaceError(LuaException):
     """Occurs if the turtle is trying to place an item but there's nothing on
     the slot that is selected"""
+
+
+class NoItemToDigError(LuaException):
+    """When you dig in a direction where there is nothing"""
 
 
 FROM_LUA: Dict[str, Any] = {
@@ -52,7 +56,8 @@ FROM_LUA: Dict[str, Any] = {
     "Items not combustible": ItemNotCombustibleError,
     "No items to combust": NoItemsToCombustError,
     "Cannot place block here": BlockNotPlaceableError,
-    "No items to place": NoItemsToPlace
+    "No items to place": NoItemsToPlaceError,
+    "Nothing to dig here": NoItemToDigError,
 }
 """Map LuaErrors to this libraries errors. These are mapped based on the 
 messages in the LuaError, hence the key to the dict is a string representing 
