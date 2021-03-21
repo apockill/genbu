@@ -11,11 +11,10 @@ from fleet import (
     NavigationTurtle,
     StepFinished,
     math_utils,
-    user_input
+    user_input,
 )
 
 
-# quarry.py
 class QuarryTurtle(NavigationTurtle):
     def __init__(self):
         super().__init__()
@@ -133,21 +132,28 @@ class QuarryTurtle(NavigationTurtle):
     @lru_cache
     def get_next_column(home_pos, x1z1, x2z2, finished_columns) \
             -> Optional[List[int]]:
-        """Return the next column. They are sorted by distance from home"""
-        from_x, to_x = sorted([x1z1[0], x2z2[0]])
-        from_z, to_z = sorted([x1z1[1], x2z2[1]])
-
-        columns = [(x, z)
-                   for x in range(from_x, to_x + 1)
-                   for z in range(from_z, to_z + 1)
-                   if (x, z) not in finished_columns]
-        if not len(columns):
+        """Return the next column"""
+        try:
+            next_column = next(
+                column for column in QuarryTurtle.get_all_columns(
+                    home_pos, x1z1, x2z2)
+                if column not in finished_columns)
+            return list(next_column)
+        except StopIteration:
             return None
 
+    @staticmethod
+    @lru_cache
+    def get_all_columns(home_pos, x1z1, x2z2):
+        """Returns all columns, sorted by distance from home"""
         hx, _, hz = home_pos
-        columns.sort(
-            key=lambda c: (hx - c[0]) ** 2 + (hz - c[1]) ** 2)
-        return list(columns[0])
+        from_x, to_x = sorted([x1z1[0], x2z2[0]])
+        from_z, to_z = sorted([x1z1[1], x2z2[1]])
+        all_columns = [(x, z)
+                       for x in range(from_x, to_x + 1)
+                       for z in range(from_z, to_z + 1)]
+        all_columns.sort(key=lambda c: (hx - c[0]) ** 2 + (hz - c[1]) ** 2)
+        return all_columns
 
 
 QuarryTurtle().run()
