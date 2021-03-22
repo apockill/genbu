@@ -12,10 +12,20 @@ def dump_if_full(nav_turtle: NavigationTurtle, dump_spot, dump_slots,
     :param dump_slots: What slots to dump
     :param trigger_slot: If this slot has an item, then the turtle will dump.
     """
-    if turtle.getItemCount(trigger_slot) > 0:
+    # Try to get the item count without making any API calls
+    item_count_at_least = nav_turtle.inventory.slot(trigger_slot).count
+    if (nav_turtle.inventory.slot(trigger_slot).confirmed or
+            item_count_at_least > 0):
+        trigger_slot_item_count = item_count_at_least
+    else:
+        # Make the API call if necessary
+        trigger_slot_item_count = lua_errors.run(turtle.getItemCount,
+                                                 trigger_slot)
+
+    if trigger_slot_item_count > 0:
         nav_turtle.move_toward(to_pos=dump_spot)
         for slot_id in dump_slots:
-            item_count = turtle.getItemCount(slot_id)
+            item_count = lua_errors.run(turtle.getItemCount, slot_id)
             nav_turtle.select(slot_id)
             # Don't end the step here so in one fell swoop all slots can be
             # cleared. Otherwise we'd have to keep state as to which slot has
