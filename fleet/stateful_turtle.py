@@ -305,9 +305,11 @@ class StatefulTurtle:
         self.turn_degrees(-90)
 
     def select(self, slot_id):
-        lua_errors.run(turtle.select, slot_id)
-        self.inventory.selected_id = slot_id
+        if self.inventory.selected.slot_id is not slot_id:
+            lua_errors.run(turtle.select, slot_id)
+            self.inventory.selected_id = slot_id
 
+    @ends_step
     def refuel(self, fuel_amount):
         lua_errors.run(turtle.refuel, fuel_amount)
         self.inventory.selected.refresh()
