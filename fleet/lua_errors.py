@@ -1,4 +1,4 @@
-from typing import Dict, Any, TYPE_CHECKING
+from typing import Dict, Any, TYPE_CHECKING, Callable
 
 from computercraft.errors import LuaException
 
@@ -76,7 +76,7 @@ def map_error(exc: LuaException, message=None, **kwargs):
         return exc
 
 
-def run(fn, *args, **kwargs):
+def run(fn: Callable, *args, **kwargs):
     """Try a function and convert any LuaExceptions"""
     try:
         return fn(*args, **kwargs)

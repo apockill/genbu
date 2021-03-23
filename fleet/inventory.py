@@ -4,6 +4,7 @@ from dataclasses import dataclass
 
 from cc import turtle
 
+from fleet import lua_errors
 
 @dataclass
 class InventorySlot:
@@ -27,10 +28,10 @@ class InventorySlot:
     def refresh(self):
         """Refresh information for this slot"""
 
-        block_info = turtle.getItemDetail(self.slot_id)
+        block_info = lua_errors.run(turtle.getItemDetail, self.slot_id)
         self.name = (str(block_info[b"name"], encoding="ascii")
                      if block_info else None)
-        self.count = turtle.getItemCount(self.slot_id)
+        self.count = lua_errors.run(turtle.getItemCount, self.slot_id)
         self.confirmed = True
 
 
@@ -54,7 +55,7 @@ class Inventory:
 
     @classmethod
     def from_turtle(cls, selected_slot) -> "Inventory":
-        turtle.select(selected_slot)
+        lua_errors.run(turtle.select, selected_slot)
         return cls(slots=cls.generate_slots(), selected_slot=selected_slot)
 
     @classmethod
