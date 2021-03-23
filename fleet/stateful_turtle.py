@@ -1,4 +1,5 @@
 from typing import Tuple, Optional, Dict
+from time import time
 
 from cc import turtle, os, gps
 
@@ -58,6 +59,7 @@ class StatefulTurtle:
 
 
     """
+    RUNS_PER_SECOND = 5
 
     def __init__(self):
         # First, ensure state is retrieved via GPS initially
@@ -100,15 +102,20 @@ class StatefulTurtle:
         print("Starting main loop!")
 
         while True:
-            # Let other turtles have a chance
-            os.sleep(0.1)
+            start_time = time()
             try:
                 with self.state as state:
                     self.step(state)
             except StepFinished:
                 pass
-            except lua_errors.TurtleBlockedError as e:
-                print(f"Turtle is Blocked! Direction: {e.direction}")
+            except Exception as e:
+                debug(f"Turtle fatal exception! "
+                      f"Turtle: {self.computer_id}", type(e), e)
+                os.sleep(5)
+            # Throttle the turtles maximum runs per second
+            throttle_time = 1 / self.RUNS_PER_SECOND - (time() - start_time)
+            if throttle_time > 0:
+                os.sleep(throttle_time)
 
     def step(self, state: StateFile):
         """This is the main logic of the turtle, to be implemented by a

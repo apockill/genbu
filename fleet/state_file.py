@@ -80,7 +80,7 @@ class PromptStateAttr(StateAttr):
 class StateFile:
     """Read and write to the state file in as-safe a way as possible"""
 
-    def __init__(self):
+    def __init__(self, computer_id: int):
         self.dict = None
         """When being held, this shows all the key/value pairs of state"""
 
@@ -91,7 +91,7 @@ class StateFile:
         self.being_held = 0
         """When this hits 0 on __exit__, all things are saved to the file"""
 
-        self._state_path = STATE_DIR / str(os.getComputerID()) / STATE_FILE
+        self._state_path = STATE_DIR / str(computer_id) / STATE_FILE
         """The location to cache all the turtles states. The reason the 
         CC filesystem isn't used is because it's unreliable during program 
         startup and shutdown, leading to inconsistent states."""
