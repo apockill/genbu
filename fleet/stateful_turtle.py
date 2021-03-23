@@ -2,7 +2,7 @@ from typing import Tuple, Optional, Dict
 from time import time
 
 from cc import turtle, os, gps
-
+from computercraft.sess import debug
 from fleet import StateFile, StateAttr, Map, math_utils, lua_errors, block_info, \
     Direction, Inventory
 
@@ -69,7 +69,8 @@ class StatefulTurtle:
                 "The turtle must have a wireless modem and be "
                 "within range of GPS satellites!")
 
-        self.state = StateFile()
+        self.computer_id = lua_errors.run(os.getComputerID)
+        self.state = StateFile(computer_id=self.computer_id)
         """Representing (x, y, z) positions"""
         """Direction on the XZ plane in degrees. A value between 0-360 """
         self.state.map = StateAttr(self.state, "map",
