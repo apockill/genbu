@@ -136,9 +136,9 @@ class StatefulTurtle:
 
         with self.state:
             if degrees == 90:
-                turtle.turnRight()
+                lua_errors.run(turtle.turnRight)
             elif degrees == -90:
-                turtle.turnLeft()
+                lua_errors.run(turtle.turnLeft)
             self.state.map.write(map)
 
     @ends_step
