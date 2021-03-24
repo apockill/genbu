@@ -163,7 +163,7 @@ class TreeFarmBot(NavigationTurtle):
 
     def chop_trees(self, state):
         tree_nodes: List[List[int]] = state.tree_nodes.read()
-
+        self.scan_for_nodes(state)
         if len(tree_nodes) == 0:
             # If theres no tree cutting tasks to be done
             return
@@ -172,7 +172,6 @@ class TreeFarmBot(NavigationTurtle):
         distance = partial(math_utils.turtle_distance, curr_pos)
         tree_nodes.sort(key=distance)
         next_node = tree_nodes[0]
-        self.scan_for_nodes(state)
         self.move_toward(to_pos=next_node, destructive=self.destructive)
         raise StepFinished
 
