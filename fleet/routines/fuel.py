@@ -21,4 +21,5 @@ def maybe_refuel(nav_turtle: NavigationTurtle, refuel_spot):
 
         # Go grab fuel
         nav_turtle.move_toward(to_pos=refuel_spot)
-        nav_turtle.suck_in_direction(Direction.down)
+        nav_turtle.suck_in_direction(Direction.down, end_step=False)
+        nav_turtle.inventory.slot(FUEL_SLOT).refresh()
