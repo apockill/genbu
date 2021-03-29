@@ -117,6 +117,9 @@ class TreeFarmBot(NavigationTurtle):
         last_checkup_time = state.last_checkup.read()
         check_every_n_seconds = state.check_every_n_seconds.read()
 
+        # ALWAYS scan for tree nodes!
+        self.scan_for_nodes(state)
+
         # Basic maintenance
         routines.maybe_refuel(self, fuel_loc)
         routines.dump_if_full(self, dump_loc, range(4, 17))
@@ -163,7 +166,6 @@ class TreeFarmBot(NavigationTurtle):
 
     def chop_trees(self, state):
         tree_nodes: List[List[int]] = state.tree_nodes.read()
-        self.scan_for_nodes(state)
         if len(tree_nodes) == 0:
             # If theres no tree cutting tasks to be done
             return
@@ -286,6 +288,15 @@ class TreeFarmBot(NavigationTurtle):
                 curr_angle=map.direction,
                 direction=direction).tolist()
             if block_position in confirmed_not_tree:
+                continue
+
+            within_farm_bounds = math_utils.within_bounding_points(
+                point=(block_position[0], block_position[2]),
+                bp1=self.state.farm_x1z1.read(),
+                bp2=self.state.farm_x2z2.read()
+            )
+            if not within_farm_bounds:
+                # Don't scan wood that's not within the farm bounds!
                 continue
             if block_position in tree_nodes:
                 # This block is already known to be a tree! No need to waste
