@@ -65,9 +65,6 @@ class QuarryTurtle(NavigationTurtle):
             state.columns_started.write(started)
 
     def step(self, state):
-        routines.maybe_refuel(self, state.fuel_loc.read())
-        routines.dump_if_full(self, state.dump_loc.read(), range(2, 16 + 1))
-
         fuel_loc = state.fuel_loc.read()
         columns_started = state.columns_started.read()
         columns_finished = state.columns_finished.read()
@@ -76,6 +73,17 @@ class QuarryTurtle(NavigationTurtle):
         dig_height = state.dig_height.read()
         dig_depth = state.dig_depth.read()
         curr_pos = state.map.read().position
+
+        within_dig_volume = math_utils.within_bounding_points(
+            point=curr_pos,
+            bp1=(mining_x1z1[0], dig_depth, mining_x1z1[1]),
+            bp2=(mining_x2z2[0], dig_height, mining_x2z2[1])
+        )
+
+        routines.maybe_refuel(self, state.fuel_loc.read(),
+                              destructive=within_dig_volume)
+        routines.dump_if_full(self, state.dump_loc.read(), range(2, 16 + 1),
+                              destructive=within_dig_volume)
 
         next_column = self.get_next_column(
             x1z1=tuple(mining_x1z1.tolist()),
@@ -86,7 +94,8 @@ class QuarryTurtle(NavigationTurtle):
 
         if next_column is None:
             # If the robot is done, go home!
-            self.move_toward(state.fuel_loc.read())
+            self.move_toward(state.fuel_loc.read(),
+                             destructive=within_dig_volume)
             return
 
         x, z = next_column
