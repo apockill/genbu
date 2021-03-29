@@ -114,16 +114,14 @@ class StateFile:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.dict != self._last_saved_dict:
-            self.write_dict(self.dict)
-            self._last_saved_dict = copy.deepcopy(self.dict)
 
         self.being_held -= 1
         assert self.being_held >= 0
 
         if self.being_held == 0:
-            self.dict = None
-            self._last_saved_dict = None
+            if self.dict != self._last_saved_dict:
+                self.write_dict(self.dict)
+                self._last_saved_dict = copy.deepcopy(self.dict)
 
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
