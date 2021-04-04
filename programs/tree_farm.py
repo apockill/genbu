@@ -271,6 +271,10 @@ class TreeFarmBot(NavigationTurtle):
         tree_nodes = state.tree_nodes.read()
         confirmed_not_tree = state.confirmed_not_tree.read()
 
+        # Only take the latest 20 of confirmed_not_tree to be legit, since trees
+        # can grow and suddenly, you know, BE TREE
+        confirmed_not_tree = confirmed_not_tree[-20:]
+
         # Get rid of any nodes that match the current position
         if map.position.tolist() in tree_nodes:
             tree_nodes.remove(map.position.tolist())
