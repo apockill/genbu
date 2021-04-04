@@ -24,7 +24,6 @@ from fleet import (
 class TreeFarmBot(NavigationTurtle):
     NODE_MIN_DISTANCE_TO_DIG = 1
     """The distance from which the turtle is allowed to dig near a node"""
-    # TODO: remove prints
     TREE_REGEXES = [
         ".*spruce.*",
         ".*log.*",
