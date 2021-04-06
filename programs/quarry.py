@@ -77,7 +77,7 @@ class QuarryTurtle(NavigationTurtle):
         within_dig_volume = math_utils.within_bounding_points(
             point=curr_pos,
             bp1=(mining_x1z1[0], dig_depth, mining_x1z1[1]),
-            bp2=(mining_x2z2[0], dig_height, mining_x2z2[1])
+            bp2=(mining_x2z2[0], dig_height + 1, mining_x2z2[1])
         )
 
         routines.maybe_refuel(self, state.fuel_loc.read(),
@@ -100,14 +100,14 @@ class QuarryTurtle(NavigationTurtle):
 
         x, z = next_column
 
-        within_dig_volume = math_utils.within_bounding_points(
-            point=curr_pos,
-            bp1=(mining_x1z1[0], dig_depth, mining_x1z1[1]),
-            bp2=(mining_x2z2[0], dig_height, mining_x2z2[1])
-        )
+        # If the robot left the column to do something else
+        if (next_column in columns_started and
+                ((curr_pos[0] != x or curr_pos[2] != z)
+                 or not within_dig_volume)):
+            columns_started.remove(next_column)
+            state.columns_started.write(columns_started)
 
-        if (next_column not in columns_started
-                or not within_dig_volume):
+        if next_column not in columns_started:
             # The turtle will move to the start of the next column if it
             # a) is above the height of the dig volume (ie, if it grabs fuel
             #    or dumps its items)
