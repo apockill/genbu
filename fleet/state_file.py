@@ -8,6 +8,7 @@ import numpy as np
 from cc import fs, os
 
 from fleet.serializable import BaseSerializable
+from fleet import lua_errors
 
 STATE_FILE = "state_file.json"
 STATE_DIR = Path(".statefiles")
@@ -26,7 +27,7 @@ class StateAttr:
         self.state_file = state_file
 
     def read(self):
-        if self.state_file.dict is None:
+        if self.state_file.being_held == 0:
             raise StateNotAcquiredError(
                 "You must run this action within a statefile context manager!")
 
@@ -44,7 +45,7 @@ class StateAttr:
         return value
 
     def write(self, value):
-        if self.state_file.dict is None:
+        if self.state_file.being_held == 0:
             raise StateNotAcquiredError(
                 "You must run this action within a statefile context manager!")
         assert isinstance(value, type(self.default))
@@ -80,7 +81,7 @@ class PromptStateAttr(StateAttr):
 class StateFile:
     """Read and write to the state file in as-safe a way as possible"""
 
-    def __init__(self, computer_id: int):
+    def __init__(self, computer_id: int = None):
         self.dict = None
         """When being held, this shows all the key/value pairs of state"""
 
@@ -91,6 +92,7 @@ class StateFile:
         self.being_held = 0
         """When this hits 0 on __exit__, all things are saved to the file"""
 
+        computer_id = computer_id or lua_errors.run(os.getComputerID)
         self._state_path = STATE_DIR / str(computer_id) / STATE_FILE
         """The location to cache all the turtles states. The reason the 
         CC filesystem isn't used is because it's unreliable during program 
@@ -140,13 +142,8 @@ class StateFile:
 
     def write_dict(self, state_dict):
         as_json = json.dumps(state_dict)
-        while True:
-            try:
-                with atomic_write(self._state_path, overwrite=True) as file:
-                    file.write(as_json)
-                break
-            except BaseException as e:
-                print(f"Error writing state file! {type(e)} {e}")
+        with atomic_write(self._state_path, overwrite=True) as file:
+            file.write(as_json)
 
     def _create_state_if_nonexistent(self):
         if self._state_path.is_file():
