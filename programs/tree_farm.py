@@ -135,11 +135,11 @@ class TreeFarmBot(NavigationTurtle):
         # Priority 2: Wait for trees to grow
         if time() - last_checkup_time < check_every_n_seconds:
             self.move_toward(fuel_loc, destructive=self.destructive)
-            print("Waiting...")
+            self.debug("Waiting...")
             os.sleep(30)
             raise StepFinished
         else:
-            print("Writing tree nodes!")
+            self.debug("Writing tree nodes!")
             state.tree_nodes.write(self.get_tree_corners(height_offset=4))
             state.placed_dirt.write([])
             state.placed_saplings.write([])
@@ -247,9 +247,9 @@ class TreeFarmBot(NavigationTurtle):
 
         return list(
             [x, height + height_offset, z]
-            for x in range(from_x + spacing, to_x + 1 - spacing,
+            for x in range(from_x + spacing * 2, to_x + 1 - spacing * 2,
                            spacing + tree_width - 1)
-            for z in range(from_z + spacing, to_z + 1 - spacing,
+            for z in range(from_z + spacing * 2, to_z + 1 - spacing * 2,
                            spacing + tree_width - 1)
         )
 
@@ -318,10 +318,6 @@ class TreeFarmBot(NavigationTurtle):
 
             if matches_regex:
                 tree_nodes.append(block_position)
-                # TODO: Am I sure we don't necessarily want to add the neighbors?
-                # neighbors = math_utils.get_coordinate_neighbors(block_position)
-                # for neighbor in neighbors:
-                #     tree_nodes.append(neighbor.tolist())
         with state:
             state.tree_nodes.write(tree_nodes)
             state.confirmed_not_tree.write(confirmed_not_tree)
