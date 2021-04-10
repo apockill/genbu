@@ -29,13 +29,6 @@ class Map(BaseSerializable):
 
     def move_to(self, position: Union[np.ndarray, Tuple]):
         """Move to an adjacent block relative to the current position"""
-        if math_utils.turtle_distance(position, self.position) > 2:
-            msg = ("The turtle was asked to move to a non-adjacent position! "
-                   f"Last known position: {self.position}, "
-                   f"Move position: {position} ")
-            # TODO: input() can't run on multiple turtles! Ideally, we would
-            #       prompt the user or approval to continue moving.
-            print(msg)
         position = np.array(position)
         self.remove_obstacle(position)
         self.position = position
