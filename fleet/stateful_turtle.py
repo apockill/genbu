@@ -95,13 +95,12 @@ class StatefulTurtle:
             map = state.map.read()
             last_known_location = map.position
             if (last_known_location != gps_loc).any():
-                print("Warning! State file is out of sync!")
+                self.debug("Warning! State file is out of sync!")
                 map.move_to(gps_loc)
                 state.map.write(map)
 
     def run(self):
-        print("Starting main loop!")
-
+        self.debug("Starting loop!")
         while True:
             start_time = time()
             try:
@@ -110,9 +109,10 @@ class StatefulTurtle:
             except StepFinished:
                 pass
             except Exception as e:
-                debug(f"Turtle fatal exception! "
+                self.debug(f"Turtle fatal exception! "
                       f"Turtle: {self.computer_id}", type(e), e)
-                os.sleep(5)
+                if not isinstance(e, lua_errors.TurtleBlockedError):
+                    os.sleep(5)
             # Throttle the turtles maximum runs per second
             throttle_time = 1 / self.RUNS_PER_SECOND - (time() - start_time)
             if throttle_time > 0:
@@ -203,17 +203,6 @@ class StatefulTurtle:
         if direction not in dig_mapping:
             raise ValueError(f"You can't dig in the direction: {direction}")
 
-        # Inspect the block about to be dug to verify it's not blacklisted
-        inspected_block_info = self.inspect_in_direction(direction)
-        if inspected_block_info is None:
-            # Nothing to dig!
-            print("Digging towards empty air!")
-            return
-
-        block_name = inspected_block_info[b"name"].decode("utf-8")
-        if block_info.name_matches_regexes(block_name, block_info.do_not_mine):
-            msg = f"Tried to mine blacklisted block: {block_name}"
-            raise MinedBlacklistedBlockError(msg)
 
         # Actually dig the block
         try:
@@ -314,3 +303,6 @@ class StatefulTurtle:
     def refuel(self, fuel_amount):
         lua_errors.run(turtle.refuel, fuel_amount)
         self.inventory.selected.refresh()
+
+    def debug(self, *args):
+        debug(f"Turtle({self.computer_id}):", *args)
