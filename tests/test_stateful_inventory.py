@@ -85,8 +85,8 @@ def test_select():
             ("drop_in_direction", StepFinished, (Direction.front, 59)),
             ("drop_in_direction", StepFinished, (Direction.front, 59)),
 
-            ("refuel", None, (420,)),
-            ("refuel", None, (50,))
+            ("refuel", StepFinished, (420,)),
+            ("refuel", StepFinished, (50,))
     )
 )
 def test_placing_dropping_and_refueling(fn_name, raises, args):
